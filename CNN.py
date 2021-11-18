@@ -1,30 +1,76 @@
-import torch
-import torch.nn as nn
+import numpy as nn
+import random
 
-X = torch.tensor([1, 2, 3, 4], dtype=torch.float32)
-Y = torch.tensor([2, 4, 6, 8], dtype=torch.float32)
+class NeuralNetwork():
 
-w = torch.tensor(0.0, dtype=torch.float32, requires_grad=True)
 
-def forward(x):
-    return w * x
+    def __init__(self, matrix):
 
-def loss(y, y_predicted):
-    return((y_predicted - y) ** 2).mean()
+        self.loadNetwork(matrix)
 
-print(f'Prediction before training: f(5) = {forward(4):.3f}')
+    def loadNetwork(self, matrix):
 
-learning_rate = 0.01
-n_iters = 100
+        try:
 
-for epoch in range(n_iters):
+            with open('weights.npy','rb') as file:
 
-    y_pred = forward(X)
-    l = loss(Y, y_pred)
-    l.backward()
+                self.LayerOneWeights = nn.load(file)
 
-    with torch.no_grad():
-        w -= learning_rate * w.grad
-    w.grad.zero_()
+                print(self.LayerOneWeights)
 
-print(f'Prediction after training: f(5) = {forward(4):.3f}')
+        except:
+
+            self.LayerOneWeights = nn.zeros((len(matrix) * len(matrix[0]), LayerInput))
+
+
+    def save(self):
+
+        with open('weights.npy','wb') as file:
+
+            nn.save(file, self.LayerOneWeights)
+
+    def flatten(self, matrix):
+
+        width = len(matrix)
+        height = len(matrix[0])
+
+        output = []
+
+        for x in range(0,height):
+
+            for y in range(0,width):
+
+                num = matrix[x][y]
+
+                output.append(num)
+
+        return output
+
+    def hiddenLayer(self, matrix):
+
+        matrix = nn.dot(matrix, self.LayerOneWeights)
+
+        return matrix
+
+    def forward(self,input):
+
+        x = self.flatten(input)
+        x = self.hiddenLayer(x)
+
+
+        self.save()
+
+        print(x)
+
+input = ([[1,2, 3, 4, 5, 6, 7, 8],
+        [9, 10,11,12,13,14,15,16],
+        [17,18,19,20,21,22,23,24],
+        [25,26,27,28,29,30,31,32],
+        [33,34,35,36,37,38,39,40],
+        [41,42,43,44,45,46,47,48],
+        [49,50,51,52,53,54,55,56],
+        [57,58,59,60,61,62,63,64]])
+
+model = NeuralNetwork(input)
+
+model.forward(input)
