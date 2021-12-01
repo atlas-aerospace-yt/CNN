@@ -4,31 +4,35 @@ import random
 class NeuralNetwork():
 
 
-    def __init__(self, matrix):
+    def __init__(self, matrix, numOfNodes, numOfLayers):
 
-        self.loadNetwork(matrix)
+        self.matrix = matrix
+        self.numOfNodes = numOfNodes
+        self.numOfLayers = numOfLayers
 
-    def loadNetwork(self, matrix):
+        self.loadNetwork()
+
+    # stops training the network each time and just loads previous
+    def loadNetwork(self):
 
         try:
 
             with open('weights.npy','rb') as file:
 
-                self.LayerOneWeights = nn.load(file)
-
-                print(self.LayerOneWeights)
+                self.Weights = nn.load(file)
 
         except:
 
-            self.LayerOneWeights = nn.zeros((len(matrix) * len(matrix[0]), LayerInput))
+            self.Weights = nn.zeros((len(self.matrix) * len(self.matrix[0]), self.numOfNodes * self.numOfLayers))#, LayerInput))
 
-
+    # save the weight and bias matrices
     def save(self):
 
         with open('weights.npy','wb') as file:
 
-            nn.save(file, self.LayerOneWeights)
+            nn.save(file, self.Weights)
 
+    # convert a matrix to an [n,n] to [n, 1]
     def flatten(self, matrix):
 
         width = len(matrix)
@@ -46,31 +50,48 @@ class NeuralNetwork():
 
         return output
 
-    def hiddenLayer(self, matrix):
+    # main neural network model
+    def hiddenLayers(self, matrix):
 
-        matrix = nn.dot(matrix, self.LayerOneWeights)
+        return nn.dot(matrix, self.Weights)
 
-        return matrix
 
+    # forward propagation... pattern recognition
     def forward(self,input):
 
         x = self.flatten(input)
-        x = self.hiddenLayer(x)
-
+        x = self.hiddenLayers(x)
 
         self.save()
 
         print(x)
 
-input = ([[1,2, 3, 4, 5, 6, 7, 8],
-        [9, 10,11,12,13,14,15,16],
-        [17,18,19,20,21,22,23,24],
-        [25,26,27,28,29,30,31,32],
-        [33,34,35,36,37,38,39,40],
-        [41,42,43,44,45,46,47,48],
-        [49,50,51,52,53,54,55,56],
-        [57,58,59,60,61,62,63,64]])
+    # mathematical activation functions
+    def sigmoid(self, input):
 
-model = NeuralNetwork(input)
+        return 1 / (1 + nn.exp(-input))
 
-model.forward(input)
+    def leakyRelu(self, input):
+
+        if x >= 0:
+            return input
+        else:
+            return 0.1 * input
+
+    def relu(self, input):
+
+        if x >= 0:
+            return input
+        else:
+            return 0
+
+    def step(self, input):
+
+        if input >= 0.5:
+            return 1
+        if input < 0.5:
+            return 0
+
+    def backward(self, input, output):
+
+        pass
