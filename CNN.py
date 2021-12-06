@@ -44,9 +44,9 @@ class NeuralNetwork():
 
         output = nn.zeros((1, len(matrix) * len(matrix[0])))
 
-        for x in range(0,height):
+        for x in range(0, width):
 
-            for y in range(0,width):
+            for y in range(0, height):
 
                 value = matrix[x][y]
 
@@ -96,12 +96,10 @@ class NeuralNetwork():
 
                 output[y][0] = self.weights[x][y]
 
-            if x < 6:
-
+            if x < self.numOfOutputs:
                 prediction[0][x] = self.sigmoid(nn.dot(input, output))
 
             else:
-
                 pass
 
         print(prediction)
@@ -109,22 +107,53 @@ class NeuralNetwork():
         self.save()
 
 
-    # cost function
-    def cost(self, y, yHat):
-
-        output = 0
-
-        output += y - yHat
-
-        return output
 
     # gradient weight function
-    def gradientW(self, n, y, yHat, z, x):
+    def gradientW(self, y, x):
 
         cw = 2 / n * self.cost(y, yHat) * self.sigmoid(z) * (1 - self.sigmoid(z)) * x
 
     # backwards propagation
-    def backward(self, n, y, yHat, z, x):
+    def backward(self, y, x):
+
+        n = self.width * self.height
+
+        input = self.flatten(input)
+
+        num = 0
+
+        layer = nn.zeros((self.width * self.height, 1))
+
+        output = nn.zeros((1, self.width * self.height))
+
+        for l in range(0, self.numOfLayers):
+
+            for x in range(l * self.width * self.height, self.width * self.height):
+
+                for y in range(0, self.width * self.height):
+
+                    layer[y][0] = self.weights[x][y]
+
+                output[0][x] = self.sigmoid(nn.dot(input , layer))
+
+            input = output
+
+        o = l + 1
+
+        prediction = nn.zeros((1, self.numOfOutputs))
+        output = nn.zeros((self.width * self.height, 1))
+
+        for x in range(o * self.width * self.height):
+
+            for y in range(0, self.numOfOutputs):
+
+                output[y][0] = self.weights[x][y]
+
+            if x < self.numOfOutputs:
+                prediction[0][x] = self.sigmoid(nn.dot(input, output))
+
+            else:
+                pass
 
         gradientW = self.gradientW(n, y, yHat, z, x)
 
