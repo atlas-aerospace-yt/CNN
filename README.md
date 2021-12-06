@@ -1,5 +1,4 @@
-# CNN
-Computer Neural Network:
+# Neural Network
 
 This is an ongoing project to create an easy to use Neural Network in python.
 
