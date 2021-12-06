@@ -9,6 +9,8 @@ class NeuralNetwork():
         self.matrix = matrix
         self.numOfLayers = numOfLayers
         self.numOfOutputs = numOfOutputs
+        self.width = len(self.matrix)
+        self.height = len(self.matrix[0])
 
         self.loadNetwork()
 
@@ -23,7 +25,7 @@ class NeuralNetwork():
 
         except:
 
-            self.weights = nn.random.uniform(-1, 1, (len(self.matrix) * len(self.matrix[0]) * (1 + self.numOfLayers), len(self.matrix) * len(self.matrix[0])))
+            self.weights = nn.random.uniform(0, 1, (self.width * self.height * (1 + self.numOfLayers), self.width * self.height))
 
     # save the weight and bias matrices
     def save(self):
@@ -65,20 +67,17 @@ class NeuralNetwork():
 
         input = self.flatten(input)
 
-        width = len(self.matrix)
-        height = len(self.matrix[0])
-
         num = 0
 
-        layer = nn.zeros((len(self.matrix) * len(self.matrix[0]), 1))
+        layer = nn.zeros((self.width * self.height, 1))
 
-        output = nn.zeros((1, len(self.matrix) * len(self.matrix[0])))
+        output = nn.zeros((1, self.width * self.height))
 
         for l in range(0, self.numOfLayers):
 
-            for x in range(l * len(self.matrix) * len(self.matrix[0]), len(self.matrix) * len(self.matrix[0])):
+            for x in range(l * self.width * self.height, self.width * self.height):
 
-                for y in range(0, len(self.matrix) * len(self.matrix[0])):
+                for y in range(0, self.width * self.height):
 
                     layer[y][0] = self.weights[x][y]
 
@@ -89,9 +88,9 @@ class NeuralNetwork():
         o = l + 1
 
         prediction = nn.zeros((1, self.numOfOutputs))
-        output = nn.zeros((len(self.matrix) * len(self.matrix[0]), 1))
+        output = nn.zeros((self.width * self.height, 1))
 
-        for x in range(o * len(self.matrix) * len(self.matrix[0])):
+        for x in range(o * self.width * self.height):
 
             for y in range(0, self.numOfOutputs):
 
@@ -115,7 +114,7 @@ class NeuralNetwork():
 
         output = 0
 
-        output += y- yHat
+        output += y - yHat
 
         return output
 
@@ -125,7 +124,7 @@ class NeuralNetwork():
         cw = 2 / n * self.cost(y, yHat) * self.sigmoid(z) * (1 - self.sigmoid(z)) * x
 
     # backwards propagation
-    def backward(self,input):
+    def backward(self, n, y, yHat, z, x):
 
         gradientW = self.gradientW(n, y, yHat, z, x)
 
