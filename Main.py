@@ -5,7 +5,7 @@ if __name__ == "__main__":
 
     input = np.zeros((8,8))
 
-    input_fat = ([[1, 0, 0, 1, 1, 0, 0, 1],
+    input_fat =      ([[1, 0, 0, 1, 1, 0, 0, 1],
                        [1, 0, 1, 1, 1, 1, 0, 1],
                        [0, 1, 0, 1, 1, 0, 1, 0],
                        [0, 1, 1, 1, 1, 1, 1, 0],
@@ -14,7 +14,7 @@ if __name__ == "__main__":
                        [1, 1, 0, 1, 1, 0, 1, 1],
                        [1, 0, 0, 0, 0, 0, 0, 1]])
 
-    input_thin = np.matrix([[0, 0, 1, 0, 0, 1, 0, 0],
+    input_thin =     ([[0, 0, 1, 0, 0, 1, 0, 0],
                        [0, 0, 1, 1, 1, 1, 0, 0],
                        [0, 0, 1, 1, 1, 1, 0, 0],
                        [0, 1, 0, 1, 1, 0, 1, 0],
@@ -27,8 +27,8 @@ if __name__ == "__main__":
 
     model.forward(input_fat)
 
-    for x in range(0, 100):
-        model.backward(input_fat, 2)
+    for x in range(0, 1000):
+        model.backward(([[0, 1]]), input_fat)
 
-    for x in range(0, 100):
-        model.backward(input_thin, 1)
+    #for x in range(0, 100):
+        #model.backward(input_thin, 1)
