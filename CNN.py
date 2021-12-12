@@ -33,7 +33,8 @@ class NeuralNetwork():
         self.numOfOutputs = numOfOutputs
         self.width = len(self.matrix)
         self.height = len(self.matrix[0])
-        self.learnRate = 1
+        self.learnRate = 0.1
+        self.cost = 0
 
         self.loadNetwork()
 
@@ -46,21 +47,33 @@ class NeuralNetwork():
 
                 self.weights = nn.load(file)
 
+            with open('bias.npy','rb')  as file:
+
+                self.bias = nn.load(file)
         except:
 
-            self.weights = nn.zeros((self.width * self.height * (self.numOfOutputs + self.numOfLayers), self.width * self.height))
+            self.weights = nn.random.uniform(0, 1, (self.width * self.height * self.numOfOutputs + self.numOfLayers, self.width * self.height))
+
+            with open('weights.npy','wb') as file:
+
+                nn.save(file, self.weights)
+
+            self.bias = nn.random.uniform(-10, 10, (self.numOfLayers + 1, self.width * self.height))
+
+            with open('bias.npy','wb') as file:
+
+                nn.save(file, self.bias)
 
     # save the weight and bias matrices
     def save(self):
 
-        try:
-            os.remove('weights.npy')
-        except:
-            pass
-
         with open('weights.npy','wb') as file:
 
             nn.save(file, self.weights)
+
+        with open('bias.npy','wb') as file:
+
+            nn.save(file, self.bias)
 
     # convert a matrix to an [n,n] to [n, 1]
     def flatten(self, matrix):
@@ -68,11 +81,9 @@ class NeuralNetwork():
         width = len(matrix)
         height = len(matrix[0])
 
-        #Noice
-
         list = []
 
-        output = nn.zeros((1, len(matrix) * len(matrix[0])))
+        output = nn.zeros((len(matrix) * len(matrix[0]),1))
 
         for x in range(0, width):
 
@@ -86,7 +97,7 @@ class NeuralNetwork():
 
         for item in list:
 
-            output[0][num] = float(item)
+            output[num][0] = float(item)
 
             num = num + 1
 
@@ -97,11 +108,9 @@ class NeuralNetwork():
 
         input = self.flatten(input)
 
-        num = 0
+        weights = nn.zeros((self.width * self.height, self.width * self.height))
 
-        layer = nn.zeros((self.width * self.height, 1))
-
-        output = nn.zeros((1, self.width * self.height))
+        bias = nn.zeros((self.width * self.height , 1))
 
         for l in range(0, self.numOfLayers):
 
@@ -109,151 +118,108 @@ class NeuralNetwork():
 
                 for y in range(0, self.width * self.height):
 
-                    layer[y][0] = self.weights[x][y]
+                    weights[x - self.width * self.height * l - 1][y] = self.weights[x][y]
+                    bias[y][0] = self.bias[l][y]
 
-                output[0][x - self.width * self.height * l - 1] = self.sigmoid(nn.dot(input , layer))
-
+            output = self.sigmoid(nn.dot(weights , input) + bias)
             input = output
 
-        o = l + 1
+        weights = nn.zeros((self.numOfOutputs, self.width * self.height))
 
-        prediction = nn.zeros((1, self.numOfOutputs))
-        output = nn.zeros((self.width * self.height, 1))
+        bias = nn.zeros((self.numOfOutputs , 1))
 
-        for x in range(o * self.width * self.height, self.numOfOutputs + o * self.width * self.height):
+        for x in range((l + 1) * self.width * self.height, self.numOfOutputs + (l + 1) * self.width * self.height):
 
             for y in range(0, self.width * self.height):
 
-                output[y][0] = self.weights[x][y]
+                weights[x - self.width * self.height * (l + 1)][y] = self.weights[x][y]
 
-            prediction[0][x - self.width * self.height * o] = self.sigmoid(nn.dot(input, output))
+                if y < self.numOfOutputs:
 
-        self.save()
+                    bias[y][0] = self.bias[l + 1][y]
 
-        return prediction
+        return self.sigmoid(nn.dot(weights , input) + bias)
 
     # gradient weight function
-    def gradientW(self, actual, prediction, layerOutput, input):
+    def gradient(self, actual, prediction, layerOutput):
 
-        #cw = 2 / n * self.cost(y, yHat) * self.sigmoid(z) * (1 - self.sigmoid(z)) * x
+        self.MSE = nn.square(nn.subtract(prediction , actual)).mean()
 
-        n = self.width * self.height
-
-        cost = nn.transpose(actual - prediction)
-
-        layerSig = self.sigmoid(layerOutput)
-
-        layerMinus = (1 - self.sigmoid(layerOutput))
-
-        gradient = 2 / n * cost * layerSig * layerMinus * input
-
-        list = []
-
-        value = 0
-
-        for y in range(0, self.width * self.height):
-
-            for x in range(0, self.numOfOutputs):
-
-
-                if x % self.numOfOutputs == 0:
-
-                    list.append(value + gradient[x][y])
-
-                    value = 0
-
-                else:
-
-                    value += gradient[x][y]
-
-        num = 0
-        output = nn.zeros((self.width * self.height, 1))
-
-        for value in list:
-
-            output[num][0] = value
-
-            num = num + 1
-
-        return output * 1
+        return self.MSE * -1
 
     # backwards propagation
     def backward(self, actual, input):
 
         prediction = self.forward(input)
 
-        for backwards in range(0, self.numOfLayers):
+        input = self.flatten(input)
 
-            n = self.width * self.height
+        weights = nn.zeros((self.width * self.height, self.width * self.height))
+        bias = nn.zeros((self.width * self.height , 1))
 
-            flatInput = self.flatten(input)
+        for l in range(0, self.numOfLayers):
 
-            layerInput = self.flatten(input)
-
-            num = 0
-
-            layer = nn.zeros((self.width * self.height, 1))
-
-            output = nn.zeros((1, self.width * self.height))
-
-            for l in range(0, self.numOfLayers):
-
-                for x in range(l * self.width * self.height, (l + 1) * self.width * self.height):
-
-                    for y in range(0, self.width * self.height):
-
-                        layer[y][0] = self.weights[x][y]
-
-                    output[0][x - self.width * self.height * l - 1] = self.sigmoid(nn.dot(layerInput , layer))
-
-                layerInput = output
-
-                if backwards == 0 + self.numOfLayers - num:
-
-                    gradient = self.gradientW(actual, prediction, layerInput, flatInput)
-
-                    weights = output - (self.learnRate * gradient)
-
-                num = num + 1
-
-            o = l + 1
-
-            output = nn.zeros((self.width * self.height, 1))
-
-            for x in range(o * self.width * self.height, self.numOfOutputs + o * self.width * self.height):
+            for x in range(l * self.width * self.height, (l + 1) * self.width * self.height):
 
                 for y in range(0, self.width * self.height):
 
-                    output[y][0] = self.weights[x][y]
+                    weights[x - self.width * self.height * l - 1][y] = self.weights[x][y]
+                    bias[y][0] = self.bias[l][y]
 
-                prediction[0][x - self.width * self.height * o] = self.sigmoid(nn.dot(layerInput, output))
+            layerOutput = self.sigmoid(nn.dot(weights , input) + bias)
 
-            if backwards == 0:
+            gradient = self.gradient(actual, prediction, layerOutput)
 
-                gradient = self.gradientW(actual, prediction, prediction, layerInput)
+            weights = weights - self.learnRate * gradient * self.sigmoidPrime(layerOutput)
+            bias = bias - self.learnRate * gradient
 
-                weights = output - (self.learnRate * gradient)
+            for x in range(l * self.width * self.height, (l + 1) * self.width * self.height):
 
-                #print(weights)
+                for y in range(0, self.width * self.height):
 
-                #list = []
+                    self.weights[x][y] = weights[x - self.width * self.height * l - 1][y]
+                    self.bias[l][y] = bias[y][0]
 
-                #o = l + 1
+            input = layerOutput
 
-                #for x in range(o, o + self.numOfOutputs):
-                #    for y in range(0, self.numOfOutputs):
+        weights = nn.zeros((self.numOfOutputs, self.width * self.height))
+        bias = nn.zeros((self.numOfOutputs , 1))
 
-                #        self.weights[x][y] = weights[y][0]
+        for x in range((l + 1) * self.width * self.height, self.numOfOutputs + (l + 1) * self.width * self.height):
 
-                #        list.append(self.weights[x][y])
+            for y in range(0, self.width * self.height):
 
-            #print(list)
+                weights[x - self.width * self.height * (l + 1)][y] = self.weights[x][y]
+
+                if y < self.numOfOutputs:
+                    bias[y][0] = self.bias[l + 1][y]
+
+        layerOutput = self.sigmoid(nn.dot(weights , input) + bias)
+
+        gradient = self.gradient(actual, prediction, layerOutput)
+
+        weights = weights - self.learnRate * gradient * self.sigmoidPrime(layerOutput)
+        bias = bias - self.learnRate * gradient
+
+        for x in range((l + 1) * self.width * self.height, self.numOfOutputs + (l + 1) * self.width * self.height):
+
+            for y in range(0, self.width * self.height):
+
+                self.weights[x][y] = weights[x - self.width * self.height * (l + 1)][y]
+
+                if y < self.numOfOutputs:
+                    self.bias[l][y] = bias[y][0]
+
         self.save()
 
     # mathematical activation functions
     def sigmoid(self, input):
 
         return 1 / (1 + nn.exp(-input))
+
+    def sigmoidPrime(self, input):
+
+        return self.sigmoid(input) * (1.0 - self.sigmoid(input))
 
     def swish(self, input):
 
