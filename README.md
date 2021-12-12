@@ -6,7 +6,8 @@ The goal is to be able to enter inputs and outputs then have the entire model ca
 
 Currently, the code generates the model with random weights and can do forward propagation with the random weights.
 
-I am currently working on backwards propagation and optimisation.
+Eventually the code will be able to recognise patters in any data sets e.g. Images or arrays.
+
 
 # Maths
 
