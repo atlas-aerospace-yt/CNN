@@ -112,7 +112,9 @@ class NeuralNetwork():
 
         bias = nn.zeros((self.width * self.height , 1))
 
-        l = -1
+        if self.numOfLayers <= 0:
+
+            l = -1
 
         for l in range(0, self.numOfLayers):
 
@@ -163,7 +165,8 @@ class NeuralNetwork():
         weights = nn.zeros((self.width * self.height, self.width * self.height))
         bias = nn.zeros((self.width * self.height , 1))
 
-        l = -1
+        if self.numOfLayers <= 0:
+            l = -1
 
         for l in range(0, self.numOfLayers):
 
@@ -186,7 +189,7 @@ class NeuralNetwork():
 
                 for y in range(0, self.width * self.height):
 
-                    self.weights[x][y] = weights[x - self.width * self.height * l - 1][y]
+                    self.weights[x][y] = weights[x - self.width * self.height * (l + 1)][y]
                     self.bias[l][y] = bias[y][0]
 
             input = layerOutput
@@ -207,7 +210,7 @@ class NeuralNetwork():
 
         gradient = self.gradient(actual, prediction, layerOutput, input)
 
-        weights = weights - self.learnRate * gradient * input
+        weights = weights - self.learnRate * nn.dot(gradient , nn.transpose(input))
         bias = bias - self.learnRate * gradient
 
         for x in range((l + 1) * self.width * self.height, self.numOfOutputs + (l + 1) * self.width * self.height):
