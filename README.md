@@ -25,6 +25,7 @@ Z = sigmoid(x * w + b)
 The backwards propagation is still in progress but is currently only an input output layer:
 
 dCdb = sigmoid'(Z) * 2 * (Y - YHat)
+
 dCdw = dCdb * x
 
 # Note:
