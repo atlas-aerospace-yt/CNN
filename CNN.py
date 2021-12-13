@@ -52,13 +52,13 @@ class NeuralNetwork():
                 self.bias = nn.load(file)
         except:
 
-            self.weights = nn.random.uniform(1, 10, (self.width * self.height * self.numOfOutputs + self.numOfLayers, self.width * self.height))
+            self.weights = nn.random.uniform(-1, 1, (self.width * self.height * self.numOfOutputs + self.numOfLayers, self.width * self.height))
 
             with open('weights.npy','wb') as file:
 
                 nn.save(file, self.weights)
 
-            self.bias = nn.random.uniform(1, 10, (self.numOfLayers + 1, self.width * self.height))
+            self.bias = nn.random.uniform(-1, 1, (self.numOfLayers + 1, self.width * self.height))
 
             with open('bias.npy','wb') as file:
 
@@ -120,7 +120,7 @@ class NeuralNetwork():
 
                 for y in range(0, self.width * self.height):
 
-                    weights[x - self.width * self.height * l - 1][y] = self.weights[x][y]
+                    weights[x - self.width * self.height * (l + 1)][y] = self.weights[x][y]
                     bias[y][0] = self.bias[l][y]
 
             output = self.sigmoid(nn.dot(weights , input) + bias)
@@ -171,7 +171,7 @@ class NeuralNetwork():
 
                 for y in range(0, self.width * self.height):
 
-                    weights[x - self.width * self.height * l - 1][y] = self.weights[x][y]
+                    weights[x - self.width * self.height * (l + 1)][y] = self.weights[x][y]
                     bias[y][0] = self.bias[l][y]
 
             layerOutput = self.sigmoid(nn.dot(weights , input) + bias)
