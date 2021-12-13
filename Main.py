@@ -5,34 +5,33 @@ from PIL import Image
 
 if __name__ == "__main__":
 
-    input = np.zeros((1,1))
+    input = np.zeros((1,2))
 
-    #input_fat =      ([[1, 0, 0, 1, 1, 0, 0, 1],
-    #                   [1, 0, 1, 1, 1, 1, 0, 1],
-    #                   [0, 1, 0, 1, 1, 0, 1, 0],
-    #                   [0, 1, 1, 1, 1, 1, 1, 0],
-    #                   [0, 1, 0, 0, 0, 0, 1, 0],
-    #                   [0, 0, 1, 1, 1, 1, 0, 0],
-    #                   [1, 1, 0, 1, 1, 0, 1, 1],
-    #                   [1, 0, 0, 0, 0, 0, 0, 1]])
+    input_fat =      ([[1, 0, 0, 1, 1, 0, 0, 1],
+                       [1, 0, 1, 1, 1, 1, 0, 1],
+                       [0, 1, 0, 1, 1, 0, 1, 0],
+                       [0, 1, 1, 1, 1, 1, 1, 0],
+                       [0, 1, 0, 0, 0, 0, 1, 0],
+                       [0, 0, 1, 1, 1, 1, 0, 0],
+                       [1, 1, 0, 1, 1, 0, 1, 1],
+                       [1, 0, 0, 0, 0, 0, 0, 1]])
 
-    #input_fat = input_fat.astype('float32')
-
-    #input_thin =     ([[0, 0, 1, 0, 0, 1, 0, 0],
-    #                   [0, 0, 1, 1, 1, 1, 0, 0],
-    #                   [0, 0, 1, 1, 1, 1, 0, 0],
-    #                   [0, 1, 0, 1, 1, 0, 1, 0],
-    #                   [1, 0, 1, 1, 1, 1, 0, 1],
-    #                   [0, 0, 1, 1, 1, 1, 0, 0],
-    #                   [0, 1, 1, 0, 0, 1, 1, 0],
-    #                   [0, 1, 0, 0, 0, 0, 1, 0]])
+    input_thin =     ([[0, 0, 1, 1, 0, 1, 0, 0],
+                       [0, 0, 1, 1, 1, 1, 0, 0],
+                       [0, 0, 1, 1, 1, 1, 0, 0],
+                       [0, 1, 0, 1, 1, 0, 1, 0],
+                       [1, 0, 1, 1, 1, 1, 0, 1],
+                       [0, 0, 1, 1, 1, 1, 0, 0],
+                       [0, 1, 1, 0, 0, 1, 1, 0],
+                       [0, 1, 0, 0, 0, 0, 1, 0]])
 
     #input_thin = input_thin.astype('float32')
 
-    model = nn(input, 0 , 1)
+    model = nn(input_thin, 0 , 1)
 
-    #image = (Image.fromarray(np.array(input_thin) * 255)).resize((1000,1000), Image.ANTIALIAS)
-    #image.show()
+    image = Image.fromarray(np.array(input_thin).astype('uint8')*255)
+    image.show()
+
     #prediction = model.forward(input_fat)
 
     #for x in range(0, 100):
@@ -40,12 +39,12 @@ if __name__ == "__main__":
 
     #cost = []
 
-    for x in range(0, 1000):
+    #for x in range(0, 10000):
 
-        model.backward(([[1]]), ([[0]]))
-        model.backward(([[0]]), ([[1]]))
+    #    model.backward(([[1]]), input_fat)
+    #    model.backward(([[0]]), input_thin)
 
-        #cost.append(float(model.dCdb))
+    #    cost.append(float(model.dCdb))
 
     #list = []
 
@@ -56,7 +55,5 @@ if __name__ == "__main__":
     #plt.plot(list, cost)
     #plt.show()
 
-    print(model.bias)
-    print(model.weights)
-    print(model.forward(([[1]])))
-    print(model.forward(([[0]])))
+    #print(model.forward(input_fat))
+    print(model.forward(input_thin))
