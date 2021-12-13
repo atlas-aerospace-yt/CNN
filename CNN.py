@@ -52,13 +52,13 @@ class NeuralNetwork():
                 self.bias = nn.load(file)
         except:
 
-            self.weights = nn.random.uniform(0, 1, (self.width * self.height * self.numOfOutputs + self.numOfLayers, self.width * self.height))
+            self.weights = nn.random.uniform(1, 10, (self.width * self.height * self.numOfOutputs + self.numOfLayers, self.width * self.height))
 
             with open('weights.npy','wb') as file:
 
                 nn.save(file, self.weights)
 
-            self.bias = nn.random.uniform(-10, 10, (self.numOfLayers + 1, self.width * self.height))
+            self.bias = nn.random.uniform(1, 10, (self.numOfLayers + 1, self.width * self.height))
 
             with open('bias.npy','wb') as file:
 
@@ -112,6 +112,8 @@ class NeuralNetwork():
 
         bias = nn.zeros((self.width * self.height , 1))
 
+        l = -1
+
         for l in range(0, self.numOfLayers):
 
             for x in range(l * self.width * self.height, (l + 1) * self.width * self.height):
@@ -141,11 +143,15 @@ class NeuralNetwork():
         return self.sigmoid(nn.dot(weights , input) + bias)
 
     # gradient weight function
-    def gradient(self, actual, prediction, layerOutput):
+    def gradient(self, actual, prediction, layerOutput, layerInput):
 
-        self.MSE = nn.square(nn.subtract(prediction , actual)).mean()
+        #self.MSE = nn.square(nn.subtract(prediction , actual)).mean()
 
-        return self.MSE * -1
+        z = self.sigmoidPrime(layerOutput)
+
+        self.dCdb = z * 2 * (prediction - actual)
+
+        return self.dCdb
 
     # backwards propagation
     def backward(self, actual, input):
@@ -156,6 +162,8 @@ class NeuralNetwork():
 
         weights = nn.zeros((self.width * self.height, self.width * self.height))
         bias = nn.zeros((self.width * self.height , 1))
+
+        l = -1
 
         for l in range(0, self.numOfLayers):
 
@@ -168,9 +176,10 @@ class NeuralNetwork():
 
             layerOutput = self.sigmoid(nn.dot(weights , input) + bias)
 
-            gradient = self.gradient(actual, prediction, layerOutput)
+            gradient = self.gradient(actual, prediction, layerOutput, input)
 
-            weights = weights - self.learnRate * gradient * self.sigmoidPrime(layerOutput)
+            weights = weights - self.learnRate * gradient * input
+
             bias = bias - self.learnRate * gradient
 
             for x in range(l * self.width * self.height, (l + 1) * self.width * self.height):
@@ -196,9 +205,9 @@ class NeuralNetwork():
 
         layerOutput = self.sigmoid(nn.dot(weights , input) + bias)
 
-        gradient = self.gradient(actual, prediction, layerOutput)
+        gradient = self.gradient(actual, prediction, layerOutput, input)
 
-        weights = weights - self.learnRate * gradient * self.sigmoidPrime(layerOutput)
+        weights = weights - self.learnRate * gradient * input
         bias = bias - self.learnRate * gradient
 
         for x in range((l + 1) * self.width * self.height, self.numOfOutputs + (l + 1) * self.width * self.height):
