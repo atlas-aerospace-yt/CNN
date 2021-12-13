@@ -5,7 +5,7 @@ from PIL import Image
 
 if __name__ == "__main__":
 
-    input = np.zeros((1,2))
+    input = np.zeros((1,1))
 
     #input_fat =      ([[1, 0, 0, 1, 1, 0, 0, 1],
     #                   [1, 0, 1, 1, 1, 1, 0, 1],
@@ -29,7 +29,7 @@ if __name__ == "__main__":
 
     #input_thin = input_thin.astype('float32')
 
-    model = nn(input, 1, 1)
+    model = nn(input, 0 , 1)
 
     #image = (Image.fromarray(np.array(input_thin) * 255)).resize((1000,1000), Image.ANTIALIAS)
     #image.show()
@@ -38,27 +38,25 @@ if __name__ == "__main__":
     #for x in range(0, 100):
     #model.backward(([[0, 1]]), input_fat)
 
-    cost = []
+    #cost = []
 
     for x in range(0, 1000):
 
-        model.backward(([[0]]), ([[0],[1]]))
-        model.backward(([[0]]), ([[0],[0]]))
-        model.backward(([[1]]), ([[1],[0]]))
-        model.backward(([[1]]), ([[1],[1]]))
+        model.backward(([[1]]), ([[0]]))
+        model.backward(([[0]]), ([[1]]))
 
-        cost.append(model.MSE)
+        #cost.append(float(model.dCdb))
 
-    list = []
+    #list = []
 
-    for x in range(0,len(cost)):
+    #for x in range(0,len(cost)):
 
-        list.append(x)
+    #    list.append(x)
 
-    plt.plot(list, cost)
-    plt.show()
+    #plt.plot(list, cost)
+    #plt.show()
 
     print(model.bias)
     print(model.weights)
-    print(model.forward(([[1],[0]])))
-    print(model.forward(([[0],[1]])))
+    print(model.forward(([[1]])))
+    print(model.forward(([[0]])))
