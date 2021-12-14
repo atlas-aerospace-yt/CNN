@@ -265,3 +265,8 @@ class NeuralNetwork():
             return 1
         if input < 0:
             return 0
+
+    # round the output to nearest 0.5
+    def round(self, input):
+
+        return nn.around(input * 2.0) / 2.0
