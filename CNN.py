@@ -19,7 +19,7 @@
 #
 # Version: dev:0.0.1
 
-
+import matplotlib.pyplot as plt
 import numpy as nn
 import random
 import os
@@ -156,7 +156,7 @@ class NeuralNetwork():
         return self.dCdb
 
     # backwards propagation
-    def backward(self, actual, input):
+    def update(self, actual, input):
 
         prediction = self.forward(input)
 
@@ -223,6 +223,36 @@ class NeuralNetwork():
                     self.bias[l][y] = bias[y][0]
 
         self.save()
+
+    # automatic update function that trains the CNN
+    def backward(self, in1, in2, in3, in4):
+
+        costFat = []
+        costThin = []
+        costWhite = []
+        costBlack = []
+
+        for x in range(0, 400):
+
+	        self.update(([[1]]), in1)
+	        costFat.append(float(self.dCdb[0]))
+	        self.update(([[0]]), in2)
+	        costThin.append(float(self.dCdb[0]))
+	        self.update(([[0.5]]), in3)
+            #costWhite.append(float(self.dCdb[0]))
+	        self.update(([[0.5]]), in4)
+	        costBlack.append(float(self.dCdb[0]))
+
+        list = []
+
+        for x in range(0,len(costFat)):
+
+            list.append(x)
+
+        plt.plot(list, costFat)
+        plt.plot(list, costThin)
+        plt.plot(list, costBlack)
+        plt.show()
 
     # mathematical activation functions
     def sigmoid(self, input):
