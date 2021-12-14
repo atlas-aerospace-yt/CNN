@@ -28,43 +28,12 @@ if __name__ == "__main__":
 
     #input_thin = input_thin.astype('float32')
 
-    model = nn(input_thin, 0, 2)
-
-    #image = Image.fromarray(np.array(input_thin).astype('uint8')*255)
-    #image.show()
+    model = nn(input_thin, 0, 1)
 
     #prediction = model.forward(input_fat)
 
     #for x in range(0, 100):
-    #model.backward(([[0, 1]]), input_fat)
-
-    costFat = []
-    costThin = []
-    costWhite = []
-    costBlack = []
-
-    for x in range(0, 1000):
-
-        model.backward(([[1],[0]]), input_fat)
-        costFat.append(float(model.dCdb[0]))
-        model.backward(([[0],[1]]), input_thin)
-        costThin.append(float(model.dCdb[0]))
-        model.backward(([[0.5],[0.5]]), input_white)
-        costWhite.append(float(model.dCdb[0]))
-        model.backward(([[0.5],[0.5]]), input_black)
-        costBlack.append(float(model.dCdb[0]))
-
-    list = []
-
-    for x in range(0,len(costFat)):
-
-        list.append(x)
-
-    plt.plot(list, costFat)
-    plt.plot(list, costThin)
-    plt.plot(list, costWhite)
-    plt.plot(list, costBlack)
-    plt.show()
+    model.backward(input_fat, input_thin, input_white, input_black)
 
     #print(model.forward(input_fat))
 
@@ -78,7 +47,10 @@ if __name__ == "__main__":
                [1, 0, 0, 0, 0, 0, 0, 1]])
 
 
+    image = Image.fromarray(np.array(test).astype('uint8')*255)
+    image.show()
+
     print(model.round(model.forward(test)))
-    #print(model.round(model.forward(input_fat)))
-    #print(model.round(model.forward(input_white)))
-    #print(model.round(model.forward(input_black)))
+    print(model.round(model.forward(input_thin)))
+    print(model.round(model.forward(input_white)))
+    print(model.round(model.forward(input_black)))
