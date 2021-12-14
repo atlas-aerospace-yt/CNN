@@ -5,7 +5,8 @@ from PIL import Image
 
 if __name__ == "__main__":
 
-    input = np.zeros((1,2))
+    input_white = np.zeros((8,8))
+    input_black = np.ones((8,8))
 
     input_fat =      ([[1, 0, 0, 1, 1, 0, 0, 1],
                        [1, 0, 1, 1, 1, 1, 0, 1],
@@ -29,31 +30,55 @@ if __name__ == "__main__":
 
     model = nn(input_thin, 0, 2)
 
-    image = Image.fromarray(np.array(input_thin).astype('uint8')*255)
-    image.show()
+    #image = Image.fromarray(np.array(input_thin).astype('uint8')*255)
+    #image.show()
 
     #prediction = model.forward(input_fat)
 
     #for x in range(0, 100):
     #model.backward(([[0, 1]]), input_fat)
 
-    cost = []
+    costFat = []
+    costThin = []
+    costWhite = []
+    costBlack = []
 
-    for x in range(0, 10000):
+    for x in range(0, 1000):
 
         model.backward(([[1],[0]]), input_fat)
+        costFat.append(float(model.dCdb[0]))
         model.backward(([[0],[1]]), input_thin)
-
-        cost.append(float(model.dCdb[0]))
+        costThin.append(float(model.dCdb[0]))
+        model.backward(([[0.5],[0.5]]), input_white)
+        costWhite.append(float(model.dCdb[0]))
+        model.backward(([[0.5],[0.5]]), input_black)
+        costBlack.append(float(model.dCdb[0]))
 
     list = []
 
-    for x in range(0,len(cost)):
+    for x in range(0,len(costFat)):
 
         list.append(x)
 
-    plt.plot(list, cost)
+    plt.plot(list, costFat)
+    plt.plot(list, costThin)
+    plt.plot(list, costWhite)
+    plt.plot(list, costBlack)
     plt.show()
 
     #print(model.forward(input_fat))
-    print(np.rint(model.forward(input_thin)))
+
+    test =   ([[1, 1, 0, 1, 1, 0, 0, 1],
+               [1, 0, 1, 1, 1, 1, 0, 1],
+               [0, 1, 0, 1, 1, 0, 1, 0],
+               [0, 1, 1, 1, 1, 1, 1, 0],
+               [0, 1, 0, 0, 0, 1, 1, 0],
+               [0, 0, 1, 1, 1, 1, 0, 0],
+               [1, 1, 0, 1, 1, 0, 1, 1],
+               [1, 0, 0, 0, 0, 0, 0, 1]])
+
+
+    print(model.round(model.forward(test)))
+    #print(model.round(model.forward(input_fat)))
+    #print(model.round(model.forward(input_white)))
+    #print(model.round(model.forward(input_black)))
