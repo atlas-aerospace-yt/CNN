@@ -6,7 +6,10 @@ The goal is to be able to enter inputs and outputs then have the entire model ca
 
 Currently, the code is able to recognise patterns in an input with a single output.
 
-The code is being tested on an 8x8 bit image that is printed with PIL.
+The code now works on 21x21 pixel images to recognise shapes.
+
+To change the input dimensions you need to change the input = np.zeros((21 , 21)) to the image size.
+In the future this will be done automatically and you can just input a data set or image.
 
 Eventually the code will be able to recognise patters in any data sets e.g. Images or arrays.
 
