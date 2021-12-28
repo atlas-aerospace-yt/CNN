@@ -57,9 +57,9 @@ dC/db = sigmoidPrime(a) * 2 * (y - yHat)
 dC/dw = x * sigmoidPrime(a) * 2 * (y - yHat)
 
 
-y = output  of model
+y is the output  of model
 
-yHat = wanted output
+yHat is the wanted output
 
 
 Then, this gradient is used to calculate the change to be applied to the network using the simple equation:
@@ -69,3 +69,5 @@ w = w - (l * dC/dw)
 
 b = b - (l * dC/db)
 
+
+l is the learn rate usually 1 or less
