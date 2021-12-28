@@ -33,12 +33,16 @@ The formula for the model is standard forwards and backwards propagation:
 
 
 z = wx + b
+
 a = sigmoid(z)
 
 
 w is the weight
+
 x is the input
+
 b is the bias
+
 a is the layer output
 
 
@@ -49,10 +53,12 @@ with a single layer is:
 
 
 dC/db = sigmoidPrime(a) * 2 * (y - yHat)
+
 dC/dw = x * sigmoidPrime(a) * 2 * (y - yHat)
 
 
 y = output  of model
+
 yHat = wanted output
 
 
@@ -60,5 +66,6 @@ Then, this gradient is used to calculate the change to be applied to the network
 
 
 w = w - (l * dC/dw)
+
 b = b - (l * dC/db)
 
