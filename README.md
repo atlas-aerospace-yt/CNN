@@ -18,8 +18,11 @@ Eventually the code will be able to recognise patters in any data sets e.g. Imag
 To run this library you will need to have installed:
 
 matplotlib       pip install matplotlib
+
 image_slicer     pip install image-slicer
+
 numpy            pip install numpy
+
 pillow           pip install Pillow
 
 # Maths
