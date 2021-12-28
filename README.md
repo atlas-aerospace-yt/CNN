@@ -27,22 +27,45 @@ pillow           (pip install Pillow)
 
 # Maths
 
-The code is designed to calculate the weight matrix size, bias matrix size and output matrix based off an:
-input
-number of outputs
-number of layers
+The code currently generates its own model dimensions and does backwards propagation on small images.
 
-The forwards propagation is simply :
+The formula for the model is standard forwards and backwards propagation:
 
-Z = sigmoid(x * w + b)
 
-The backwards propagation is still in progress but is currently only an input output layer:
+z = wx + b
 
-dCdb = sigmoid'(Z) * 2 * (Y - YHat)
+a = sigmoid(z)
 
-dCdw = dCdb * x
 
-# Note:
+w is the weight
 
-The code doesn't fully work yet, the forwards propagation works however I'm still working on the backwards propagation.
-If you have any ideas how to fix the backwards propagation please fork.
+x is the input
+
+b is the bias
+
+a is the layer output
+
+
+The way a Neural Network works, is it takes the input and passes it through forward propagation. Then,
+to train the model you use the chain rule to calculate the gradient of the weights and biases with respect 
+to the cost. The cost is simply the (output predicted - the wanted output) squared. The formula to calcule the gradient
+with a single layer is:
+
+
+dC/db = sigmoidPrime(a) * 2 * (y - yHat)
+
+dC/dw = x * sigmoidPrime(a) * 2 * (y - yHat)
+
+
+y = output  of model
+
+yHat = wanted output
+
+
+Then, this gradient is used to calculate the change to be applied to the network using the simple equation:
+
+
+w = w - (l * dC/dw)
+
+b = b - (l * dC/db)
+
