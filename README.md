@@ -13,6 +13,14 @@ In the future this will be done automatically and you can just input a data set 
 
 Eventually the code will be able to recognise patters in any data sets e.g. Images or arrays.
 
+# Dependencies
+
+To run this library you will need to have installed:
+
+matplotlib       pip install matplotlib
+image_slicer     pip install image-slicer
+numpy            pip install numpy
+pillow           pip install Pillow
 
 # Maths
 
