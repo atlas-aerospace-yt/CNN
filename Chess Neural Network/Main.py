@@ -18,11 +18,10 @@ class Learning():
 
         if width != None and height != None:
 
-            example = np.zeros((width,height))
-            self.model = nn(example)
+            self.model = nn(chess=True)
 
             ## TODO: find a way to model output dynamically
-            
+
         ## TODO: Automatically organise
 
 class Engine():

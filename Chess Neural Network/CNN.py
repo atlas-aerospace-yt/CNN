@@ -21,6 +21,7 @@
 #
 
 import matplotlib.pyplot as plt
+from warnings import warn
 from PIL import Image
 import numpy as nn
 import random
@@ -28,17 +29,27 @@ import os
 
 class NeuralNetwork():
 
-    def __init__(self, matrix, numOfOutputs = None, dir = None, train=False):
+    def __init__(self, matrix=None, numOfOutputs=None, dir=None, train=False, chess=False):
 
-        self.matrix = matrix
+        if matrix != None:
+            self.matrix = matrix
+
+        elif chess == True:
+            self.matrix = nn.zeros((8,8))
+
+        else:
+            warn("Warning: No matrix input!")
+            exit()
 
         if numOfOutputs != None:
             self.numOfOutputs = numOfOutputs
+
         elif dir != None:
             self.numOfOutputs = len(self.getOutputs(dir))
             self.outputs = self.getOutputs(dir)
-        else:
-            print("Error: Input NumOfOutputs or Directory expected, got neither!")
+
+        elif numOfOutputs != None and chess == False:
+            warn("Error: Input NumOfOutputs or Directory expected, got neither!")
             exit()
 
         self.width = len(self.matrix)
@@ -52,8 +63,12 @@ class NeuralNetwork():
 
             self.autoBackward(dir)
 
+        if chess == True:
+
+            self.loadNetwork(chess=True)
+
     # stops training the network each time and just loads previous
-    def loadNetwork(self):
+    def loadNetwork(self, chess=False):
 
         try:
 
@@ -66,13 +81,19 @@ class NeuralNetwork():
                 self.bias = nn.load(file)
         except:
 
-            self.weights = nn.random.uniform(-1, 1, (self.width * self.height * self.numOfOutputs, self.width * self.height))
+            if chess == False:
+
+                self.weights = nn.random.uniform(-1, 1, (self.width * self.height * self.numOfOutputs, self.width * self.height))
+                self.bias = nn.random.uniform(-1, 1, (1, self.width * self.height))
+
+            else:
+
+                self.weights = nn.random.unifrom(-1, 1, (8,4))
+                self.bias = nn.random.uniform(-1, 1, (8,4))
 
             with open('weights.npy','wb') as file:
 
-                nn.save(file, self.weights)
-
-            self.bias = nn.random.uniform(-1, 1, (1, self.width * self.height))
+                nn.save(file,self.weights)
 
             with open('bias.npy','wb') as file:
 
@@ -157,7 +178,7 @@ class NeuralNetwork():
         return self.dCdb
 
     # backwards propagation
-    def update(self, actual, input):
+    def backward(self, actual, input):
 
         prediction = self.forward(input)
 
@@ -213,7 +234,7 @@ class NeuralNetwork():
                 actual[pos][0] = 1
 
                 image = self.img(item)
-                self.update(actual, image)
+                self.backward(actual, image)
 
     def  getOutputs(self, dir):
 
