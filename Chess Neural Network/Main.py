@@ -5,10 +5,19 @@
 # The code will be based off the deeplearn ches engine
 # known as Alpha-Zero.
 
+# P = 0.1
+# B = 0.2
+# N = 0.3
+# R = 0.5
+# Q = 0.8
+# K = 1.0
+
 import matplotlib.pyplot as plt
 from CNN import NeuralNetwork as nn
 import numpy as np
-import Chess
+from Chess import Board
+from Chess import Pieces
+from Chess import Notation
 from PIL import Image
 import os
 
@@ -20,11 +29,21 @@ class Engine():
 
     def move(self):
 
-        self.model.forwardChess(board)
+        input = ([[5, 3, 2, 8, 10, 2, 3, 5],
+                  [1, 1, 1, 1, 1, 1, 1, 1],
+                  [0, 0, 0, 0, 0, 0, 0, 0],
+                  [0, 0, 0, 0, 0, 0, 0, 0],
+                  [0, 0, 0, 0, 0, 0, 0, 0],
+                  [0, 0, 0, 0, 0, 0, 0, 0],
+                  [1, 1, 1, 1, 1, 1, 1, 1],
+                  [5, 3, 2, 8, 10, 2, 3, 5]])
+
+        self.model.backwardChess(input, [[4],[2],[4],[4]])
 
 if __name__ == "__main__":
 
     train = Engine()
+    train.move()
 
     ## TODO: Work on algorithm
 

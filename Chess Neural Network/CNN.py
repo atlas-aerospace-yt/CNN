@@ -113,8 +113,8 @@ class NeuralNetwork():
 
             else:
 
-                self.weights = nn.random.uniform(-1, 1, (8,4))
-                self.bias = nn.random.uniform(-1, 1, (8,4))
+                self.weights = nn.random.uniform(-1, 1, (8,5))
+                self.bias = nn.random.uniform(-1, 1, (8,5))
 
             with open('weights.npy','wb') as file:
 
@@ -242,12 +242,51 @@ class NeuralNetwork():
     # predict the best chess move function
     def forwardChess(self, board):
 
-        ## TODO: forward chess propagation
+        weightsLayerOne = nn.zeros((8,4))
 
-        pass
+        for y in range(0,8):
+
+            for x in range(0,4):
+
+                weightsLayerOne[y][x] = self.weights[y][x]
+
+        biasLayerOne = nn.zeros((8,4))
+
+        for y in range(0,8):
+
+            for x in range(0,4):
+
+                biasLayerOne[y][x] = self.bias[y][x]
+
+        weightsLayerTwo = nn.zeros((8, 1))
+
+        for y in range(0, 8):
+
+            for x in range(0,1):
+
+                weightsLayerTwo[y][x] = self.weights[y][x]
+
+        biasLayerTwo = nn.zeros((4,1))
+
+        for y in range(0, 4):
+
+            for x in range(0, 1):
+
+                biasLayerTwo[y][x] = self.bias[y][x]
+
+        z = board @ weightsLayerOne + biasLayerOne
+
+        a = self.leakyRelu(z)
+
+        z = a.T @ weightsLayerTwo + biasLayerTwo
+
+        y = self.leakyRelu(z)
+
+        return y
+
 
     # a self learning functions for just chess
-    def learnChess(self):
+    def backwardChess(self, board, actual):
 
         ## TODO: self learning algorithm
         ## Plan:
@@ -256,8 +295,58 @@ class NeuralNetwork():
         ## focus on optimizing the bot until it beats the other
         ## then make the other bot beat the bot that was beaten
 
-        pass
+        learnRate = 0.1
 
+        weightsLayerOne = nn.zeros((8,4))
+
+        for y in range(0,8):
+
+            for x in range(0,4):
+
+                weightsLayerOne[y][x] = self.weights[y][x]
+
+        biasLayerOne = nn.zeros((8,4))
+
+        for y in range(0,8):
+
+            for x in range(0,4):
+
+                biasLayerOne[y][x] = self.bias[y][x]
+
+        weightsLayerTwo = nn.zeros((8, 1))
+
+        for y in range(0, 8):
+
+            for x in range(0,1):
+
+                weightsLayerTwo[y][x] = self.weights[y][x]
+
+        biasLayerTwo = nn.zeros((4,1))
+
+        for y in range(0, 4):
+
+            for x in range(0, 1):
+
+                biasLayerTwo[y][x] = self.bias[y][x]
+
+        # backwards propagation
+
+        for i in range(0, 1000):
+
+            zOne = board @ weightsLayerOne + biasLayerOne
+            a = self.leakyRelu(zOne)
+            zTwo = a.T @ weightsLayerTwo + biasLayerTwo
+            y = self.leakyRelu(zTwo)
+
+            biasGradient = self.leakyReluPrime(zTwo) * (2 * (y - actual))
+            weightGradient = a.T *(self.leakyReluPrime(zTwo) * 2 * (y-actual))
+
+            print(weightGradient)
+
+            biasLayerTwo -= learnRate * biasGradient
+            #weightsLayerTwo -= learnRate * weightGradient
+
+            print(y - actual)
     # automatic update function that trains the CNN
     def autoBackward(self, dir):
 
@@ -300,10 +389,33 @@ class NeuralNetwork():
 
     def leakyRelu(self, input):
 
-        if input > 0:
-            return input
-        else:
-            return 0.1 * input
+        output = nn.zeros((len(input),len(input[0])))
+
+        for x in range(0, len(input)):
+
+            for y in range(0, len(input[0])):
+
+                if input[x][y] > 0.0:
+                    output[x][y] = input[x][y]
+                else:
+                    output[x][y] = 0.1 * input[x][y]
+
+        return output
+
+    def leakyReluPrime(self, input):
+
+        output = nn.zeros((len(input),len(input[0])))
+
+        for x in range(0, len(input)):
+
+            for y in range(0, len(input[0])):
+
+                if input[x][y] > 0.0:
+                    output[x][y] = 1.0
+                else:
+                    output[x][y] = 0.1
+
+        return output
 
     def relu(self, input):
 
