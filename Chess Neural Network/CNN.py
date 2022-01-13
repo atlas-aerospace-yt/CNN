@@ -113,8 +113,8 @@ class NeuralNetwork():
 
             else:
 
-                self.weights = nn.random.uniform(-1, 1, (8,5))
-                self.bias = nn.random.uniform(-1, 1, (8,5))
+                self.weights = nn.random.uniform(-1, 1, (64,128))
+                self.bias = nn.random.uniform(-1, 1, (64,65))
 
             with open('weights.npy','wb') as file:
 
@@ -151,8 +151,10 @@ class NeuralNetwork():
 
                 value = matrix[x][y]
 
-                list.append(value[0])
-
+                try:
+                    list.append(value[0])
+                except:
+                    list.append(value)
         num = 0
 
         for item in list:
@@ -242,44 +244,43 @@ class NeuralNetwork():
     # predict the best chess move function
     def forwardChess(self, board):
 
-        weightsLayerOne = nn.zeros((8,4))
+        input = self.flatten(board)
 
-        for y in range(0,8):
+        weightsLayerOne = nn.zeros((64,64))
 
-            for x in range(0,4):
+        for y in range(0,64):
+
+            for x in range(0,64):
 
                 weightsLayerOne[y][x] = self.weights[y][x]
 
-        biasLayerOne = nn.zeros((8,4))
+        biasLayerOne = nn.zeros((64,1))
 
-        for y in range(0,8):
-
-            for x in range(0,4):
-
-                biasLayerOne[y][x] = self.bias[y][x]
-
-        weightsLayerTwo = nn.zeros((8, 1))
-
-        for y in range(0, 8):
+        for y in range(0,64):
 
             for x in range(0,1):
 
-                weightsLayerTwo[y][x] = self.weights[y][x]
+                biasLayerOne[y][x] = self.bias[y][x]
+
+        weightsLayerTwo = nn.zeros((4, 64))
+
+        for y in range(0, 4):
+
+            for x in range(64,128):
+
+                weightsLayerTwo[y][x-64] = self.weights[y][x]
 
         biasLayerTwo = nn.zeros((4,1))
 
         for y in range(0, 4):
 
-            for x in range(0, 1):
+            for x in range(1, 2):
 
-                biasLayerTwo[y][x] = self.bias[y][x]
+                biasLayerTwo[y][x-1] = self.bias[y][x]
 
-        z = board @ weightsLayerOne + biasLayerOne
-
+        z = weightsLayerOne @ input + biasLayerOne
         a = self.leakyRelu(z)
-
-        z = a.T @ weightsLayerTwo + biasLayerTwo
-
+        z = weightsLayerTwo @ a + biasLayerTwo
         y = self.leakyRelu(z)
 
         return y
@@ -295,58 +296,66 @@ class NeuralNetwork():
         ## focus on optimizing the bot until it beats the other
         ## then make the other bot beat the bot that was beaten
 
-        learnRate = 0.1
+        learnRate = 0.01
 
-        weightsLayerOne = nn.zeros((8,4))
+        input = self.flatten(board)
 
-        for y in range(0,8):
+        weightsLayerOne = nn.zeros((64,64))
 
-            for x in range(0,4):
+        for y in range(0,64):
+
+            for x in range(0,64):
 
                 weightsLayerOne[y][x] = self.weights[y][x]
 
-        biasLayerOne = nn.zeros((8,4))
+        biasLayerOne = nn.zeros((64,1))
 
-        for y in range(0,8):
-
-            for x in range(0,4):
-
-                biasLayerOne[y][x] = self.bias[y][x]
-
-        weightsLayerTwo = nn.zeros((8, 1))
-
-        for y in range(0, 8):
+        for y in range(0,64):
 
             for x in range(0,1):
 
-                weightsLayerTwo[y][x] = self.weights[y][x]
+                biasLayerOne[y][x] = self.bias[y][x]
+
+        weightsLayerTwo = nn.zeros((4, 64))
+
+        for y in range(0, 4):
+
+            for x in range(64,128):
+
+                weightsLayerTwo[y][x-64] = self.weights[y][x]
 
         biasLayerTwo = nn.zeros((4,1))
 
         for y in range(0, 4):
 
-            for x in range(0, 1):
+            for x in range(1, 2):
 
-                biasLayerTwo[y][x] = self.bias[y][x]
+                biasLayerTwo[y][x-1] = self.bias[y][x]
 
         # backwards propagation
 
         for i in range(0, 1000):
 
-            zOne = board @ weightsLayerOne + biasLayerOne
+            zOne = weightsLayerOne @ input + biasLayerOne
             a = self.leakyRelu(zOne)
-            zTwo = a.T @ weightsLayerTwo + biasLayerTwo
+            zTwo = weightsLayerTwo @ a + biasLayerTwo
             y = self.leakyRelu(zTwo)
 
-            biasGradient = self.leakyReluPrime(zTwo) * (2 * (y - actual))
-            weightGradient = a.T *(self.leakyReluPrime(zTwo) * 2 * (y-actual))
+            biasGradient = self.leakyReluPrime(zTwo) * 2 * (y - actual)
+            weightGradient = a * self.leakyReluPrime(zTwo) * 2 * (y - actual)
 
             print(weightGradient)
 
-            biasLayerTwo -= learnRate * biasGradient
-            #weightsLayerTwo -= learnRate * weightGradient
+            biasLayerTwo = biasLayerTwo - (learnRate * biasGradient)
+            weightsLayerTwo = weightsLayerTwo - (learnRate * weightGradient)
 
-            print(y - actual)
+            #biasGradient = weightsLayerTwo @ self.leakyReluPrime(zOne) @ self.leakyReluPrime(zTwo).T * 2 * (y - actual).T
+            #weightGradient = biasGradient * input.T
+
+            #biasLayeOne = biasLayerOne - (learnRate * biasGradient)
+            #weightsLayerOne = weightsLayerOne - (learnRate * weightGradient)
+
+
     # automatic update function that trains the CNN
     def autoBackward(self, dir):
 

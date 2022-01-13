@@ -38,6 +38,7 @@ class Engine():
                   [1, 1, 1, 1, 1, 1, 1, 1],
                   [5, 3, 2, 8, 10, 2, 3, 5]])
 
+        #self.model.forwardChess(input)
         self.model.backwardChess(input, [[4],[2],[4],[4]])
 
 if __name__ == "__main__":
