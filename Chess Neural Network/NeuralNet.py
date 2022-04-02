@@ -1,35 +1,171 @@
 import matplotlib.pyplot as plt
+from collections import Counter
 from warnings import warn
 from PIL import Image
 import threading
 import numpy as nn
-import Chess
 import random
 import time
 import os
-
-## TODO: Game files
-## TODO: Save if the move was on the winning player
-## TODO: Finish all data organising
-## TODO:  Finish data reading
+import Chess
 
 class DataOrganiser():
 
     def __init__(self):
 
-        pass
+        for engine in range(1,3):
 
-    def winLossRatio(self):
+            if not os.path.exists(f"Data"):
+                os.mkdir(f"Data")
+            if not os.path.exists(f"Engine{engine}"):
+                os.mkdir(f"Engine{engine}")
+            if not os.path.exists(f"Engine{engine}/Training"):
+                os.mkdir(f"Engine{engine}/Training")
 
-        pass
+    def findMostCommonMove(self, dir, engine):
 
-    def getPosition(self):
+        try:
+            numOfMoveFiles = len(os.listdir(f"Engine{engine}/Training/{dir}"))
+        except:
+            return None
 
-        board = 0
-        acual = 0
-        engine = 0
+        moveList = []
 
-        return board, actual, engine
+        for i in range(1, numOfMoveFiles):
+            move = nn.load(f"Engine{engine}/Training/{dir}/Move{numOfMoveFiles - 1}.npy")
+            moveList.append(move)
+
+        move = Counter(moveList)
+
+        print(move.most_common(1))
+
+    def convertNotation(self, move):
+
+        move = str(move)
+
+        move = move.replace("Q","")
+        move = move.replace("K","")
+        move = move.replace("N","")
+        move = move.replace("B","")
+        move = move.replace("P","")
+        move = move.replace("R","")
+        move = move.replace("=","")
+        move = move.replace("x","")
+
+        legal_CoOrdinates = []
+
+        if move == "O-O" and Chess.startup.white_turn:
+            move = [1, 5, 1, 7]
+        elif move == "O-O" and not Chess.startup.white_turn:
+            move = [8, 5, 8, 7]
+        elif move == "O-O-O" and Chess.startup.white_turn:
+            move = [1, 5, 1, 3]
+        elif move == "O-O-O" and not Chess.startup.white_turn:
+            move = [8, 5, 8, 3]
+        else:
+            move.split()
+
+        output = ''
+        for value in move:
+
+            if not str(value).isnumeric():
+
+                value = Chess.notation.get_column_char(value) + 1
+
+            output += str(f"{value} ")
+
+        move = [int(x) for x in output.split()]
+
+        if len(move) == 2:
+            list = [0, 0]
+            for item in move:
+                list.append(item)
+            move = list
+        if len(move) == 3:
+            list = [0]
+            for item in move:
+                list.append(item)
+            move = list
+
+        return nn.asarray(move)
+
+    def saveGamePosition(self, item, file, engine):
+
+        save = True
+
+        newPosition = nn.load(f"Data/{item}/{file}/Board.npy")
+
+        for position in os.listdir(f"Engine{engine}/Training"):
+
+            oldPosition = nn.load(f"Engine{engine}/Training/{position}/Board.npy")
+
+            if nn.array_equal(oldPosition, newPosition):
+
+                try:
+                    numOfMoveFiles = len(os.listdir(f"Engine{engine}/Training/{position}"))
+                except:
+                    numOfMoveFiles = 1
+
+                save = False
+                move = nn.load(f"Data/{item}/{file}/Move.npy")
+                nn.save(f"Engine{engine}/Training/{position}/Move{numOfMoveFiles}.npy", move)
+
+        if save:
+
+            move = nn.load(f"Data/{item}/{file}/Move.npy")
+
+            file = os.listdir(f"Engine{engine}/Training")
+            amountOfFile = len(file)
+
+            try:
+                numOfMoveFiles = len(os.listdir(f"Engine{engine}/Training/Position{amountOfFile+1}"))
+            except:
+                numOfMoveFiles = 1
+
+            os.mkdir(f"Engine{engine}/Training/Position{amountOfFile+1}")
+            nn.save(f"Engine{engine}/Training/Position{amountOfFile+1}/Board.npy", newPosition)
+            nn.save(f"Engine{engine}/Training/Position{amountOfFile+1}/Move{numOfMoveFiles}.npy", move)
+
+    def organiseData(self):
+
+        for item in os.listdir(f"Data"):
+
+            try:
+                winner = nn.load(f"Data/{item}/Winner.npy")
+            except:
+                winner = None
+
+            if winner != None:
+                if winner == 1:
+                    black = True
+                    white = False
+                    engine = 2
+                elif winner == -1:
+                    white = True
+                    black = False
+                    engine = 1
+
+                i = 0
+
+                for file in os.listdir(f"Data/{item}"):
+
+                    save = True
+
+                    if file != "Winner.npy":
+
+                        i += 1
+
+                        if i % 2 == 0 and black:
+
+                            self.saveGamePosition(item, file, engine)
+
+                        elif white:
+
+                            self.saveGamePosition(item, file, engine)
+
+                        else:
+
+                            pass
 
     def similarity(self, output, legal):
 
@@ -83,35 +219,29 @@ class DataOrganiser():
             return 0
 
         else:
-            print("no legal mnoves")
             exit()
 
         return pos
 
-    def arrangeLegal(self, legal):
-
-        pass
 
 class NeuralNetwork():
 
     def __init__(self):
 
+        self.loopCounter = 0
+
         self.data = DataOrganiser()
-
-        for engine in range(1,3):
-            if not os.path.exists(f"Engine{engine}"):
-                os.mkdir(f"Engine{engine}")
-            if not os.path.exists(f"Data"):
-                os.mkdir(f"Data")
-
-        self.width = 8
-        self.height = 8
 
         self.loadEngine(1)
         self.loadEngine(2)
 
-    def loadEngine(self, engine):
+        trainingEngineOne = threading.Thread(target=self.backwardChess, args=(1,))
+        trainingEngineOne.start()
 
+        trainingEngineTwo = threading.Thread(target=self.backwardChess, args=(2,))
+        trainingEngineTwo.start()
+
+    def loadEngine(self, engine):
 
         try:
 
@@ -149,69 +279,114 @@ class NeuralNetwork():
 
     def engine(self):
 
-            actual_data = []
+        self.loopCounter += 1
 
-            for item in Chess.pieces.legal_moves:
+        if self.loopCounter % 25 == 0 or self.loopCounter == 1:
+            #self.data.organiseData()
+            pass
 
-                item = item.replace("Q","")
-                item = item.replace("K","")
-                item = item.replace("N","")
-                item = item.replace("B","")
-                item = item.replace("P","")
-                item = item.replace("R","")
-                item = item.replace("=","")
-                item = item.replace("x","")
+        actual_data = []
+        legal_CoOrdinates = []
 
+        for item in Chess.pieces.legal_moves:
+            move = ""
+            for item in self.data.convertNotation(item):
 
-                actual_data.append(item)
+                move += str(item)
 
-            legal_CoOrdinates = []
+            legal_CoOrdinates.append(move)
 
-            for item in actual_data:
+        matrix = Chess.pieces.convert_pieces_to_matrix()
 
-                if item == "O-O":
-                    pass
-                elif item == "O-O-O":
-                    pass
-                else:
-                    item.split()
+        train = True
 
-                    output = ''
+        if Chess.startup.white_turn:
+            CoOrdinates = self.forwardChess(matrix, 1, legal_CoOrdinates)
+        else:
+            CoOrdinates = self.forwardChess(matrix, 2, legal_CoOrdinates)
 
-                    for value in item:
+        if len(CoOrdinates) == 4:
 
-                        if not str(value).isnumeric():
+            name = Chess.pieces.find_piece_name(int(CoOrdinates[0] - 1), int(CoOrdinates[1] - 1))
 
-                            value = Chess.notation.get_column_char(value) + 1
+            if name == "none":
+                name = ""
 
-                        output += str(value)
+            Pawn = Chess.pieces.find_piece_name(int(CoOrdinates[0] - 1), int(CoOrdinates[1] - 1))
 
-                    legal_CoOrdinates.append(output)
+        #    print(Pawn, int(CoOrdinates[0] - 1), int(CoOrdinates[1] - 1))
 
-            matrix = Chess.pieces.convert_pieces_to_matrix()
-
-            train = True
-
-            if Chess.startup.white_turn:
-                CoOrdinates = self.forwardChess(matrix, 1, legal_CoOrdinates)
+            if int(CoOrdinates[0] -1) == -1 and int(CoOrdinates[1]-1) != -1:
+                Pawn = True
             else:
-                CoOrdinates = self.forwardChess(matrix, 2, legal_CoOrdinates)
+                Pawn = False
 
-            if len(CoOrdinates) == 4:
-                name = Chess.pieces.find_piece_name(int(CoOrdinates[0] - 1), int(CoOrdinates[1] - 1))
+            if Chess.pieces.find_piece_name(int(CoOrdinates[2] - 1), int(CoOrdinates[3] - 1)) == "none":
 
-                if Chess.pieces.find_piece_name(int(CoOrdinates[2] - 1), int(CoOrdinates[3] - 1)) == "none":
-                    move = name + str(Chess.notation.get_column(int(CoOrdinates[0]-1))) + str(int(CoOrdinates[1])) + str(Chess.notation.get_column(int(CoOrdinates[2]-1))) + str(int(CoOrdinates[3]))
-                else:
-                    move = name + str(Chess.notation.get_column(int(CoOrdinates[0]-1))) + str(int(CoOrdinates[1])) + "x" + str(Chess.notation.get_column(int(CoOrdinates[2]-1))) + str(int(CoOrdinates[3]))
+                xOne = str(Chess.notation.get_column(int(CoOrdinates[0]-1)))
+                yOne = str(int(CoOrdinates[1]))
+                xTwo = str(Chess.notation.get_column(int(CoOrdinates[2]-1)))
+                yTwo = str(int(CoOrdinates[3]))
 
-            elif len(CoOrdinates) == 3:
+                if xOne.lower() == "none":
+                    xOne = ""
 
-                move = str(Chess.notation.get_column(int(CoOrdinates[0]-1))) + "x" + str(Chess.notation.get_column(int(CoOrdinates[1]-1))) + str(int(CoOrdinates[2]))
-            elif len(CoOrdinates) == 2:
-                move = str(Chess.notation.get_column(int(CoOrdinates[0]-1))) + str(int(CoOrdinates[1]))
+                if yOne.lower() == "none":
+                    yOne = ""
+                if xTwo.lower() == "none":
+                    xTwo = ""
 
-            return move
+                if yTwo.lower() == "none":
+                    yTwo = ""
+
+                move = name + xOne + yOne + xTwo + yTwo
+            elif Pawn:
+
+                xOne = str(Chess.notation.get_column(int(CoOrdinates[1]-1)))
+                xTwo = str(Chess.notation.get_column(int(CoOrdinates[2]-1)))
+                yTwo = str(int(CoOrdinates[3]))
+
+                if xOne.lower() == "none":
+                    xOne = ""
+
+                if xTwo.lower() == "none":
+                    xTwo = ""
+
+                if yTwo.lower() == "none":
+                    yTwo = ""
+
+                move = xOne + "x" + xTwo + yTwo
+
+                print("PAWN MOVe")
+            else:
+                xOne = str(Chess.notation.get_column(int(CoOrdinates[0]-1)))
+                yOne = str(int(CoOrdinates[1]))
+                xTwo = str(Chess.notation.get_column(int(CoOrdinates[2]-1)))
+                yTwo = str(int(CoOrdinates[3]))
+
+                if xOne.lower() == "none":
+                    xOne = ""
+
+                if yOne.lower() == "none":
+                    yOne = ""
+                if xTwo.lower() == "none":
+                    xTwo = ""
+
+                if yTwo.lower() == "none":
+                    yTwo = ""
+
+                move = name + xOne + yOne + "x" + xTwo + yTwo
+
+        elif len(CoOrdinates) == 3:
+
+            move = str(Chess.notation.get_column(int(CoOrdinates[0]-1))) + "x" + str(Chess.notation.get_column(int(CoOrdinates[1]-1))) + str(int(CoOrdinates[2]))
+        elif len(CoOrdinates) == 2:
+            move = str(Chess.notation.get_column(int(CoOrdinates[0]-1))) + str(int(CoOrdinates[1]))
+
+
+        print(move)
+
+        return move
 
     def forwardChess(self, board, engine, legal):
 
@@ -273,13 +448,6 @@ class NeuralNetwork():
         aTwo = self.leakyRelu(zTwo)
         zThree = weightsLayerThree @ aTwo + biasLayerThree
         y = self.selu(zThree)
-
-        training = threading.Thread(target=self.backwardChess, args=(engine))
-        training.start()
-        training.join()
-        #cost = self.backwardChess(engine, iter=100)
-
-        time.sleep(0.1)
 
         y = nn.rint(y)
         y = y.tolist()
@@ -358,141 +526,130 @@ class NeuralNetwork():
         minimum = 1e+10
 
         # backwards propagation
-        for i in range(0, iter):
+        while True:
 
-            cost = 0
+            if not Chess.startup.run:
+
+                exit()
 
             c = ([[0],[0],[0],[0]])
 
-            for dir in os.listdir(f"Data"):
+            cost = 0
 
-                for item in (f"Data/{dir}"):
+            for dir in os.listdir(f"Engine{engine}/Training"):
 
-                    board, actual, engine = self.data.GetPosition(item)
+                board = nn.load(f"Engine{engine}/Training/{dir}/Board.npy")
 
-                    actual = actual.T
-                    actual = actual.astype(nn.float)
-                    actual = nn.asarray(actual)
-                    input = self.flatten(board)
+                actual = self.data.findMostCommonMove(dir, engine)
+                print(actual)
+                actual = nn.matrix(self.data.convertNotation(actual))
+                actual = actual.T
+                actual = nn.asarray(actual.astype(nn.float))
+                input = self.flatten(board)
 
-                    zOne = weightsLayerOne @ input + biasLayerOne
-                    aOne = self.tanh(zOne)
-                    zTwo = weightsLayerTwo @ aOne + biasLayerTwo
-                    aTwo = self.leakyRelu(zTwo)
-                    zThree = weightsLayerThree @ aTwo + biasLayerThree
-                    y = self.selu(zThree)
+                zOne = weightsLayerOne @ input + biasLayerOne
+                aOne = self.tanh(zOne)
+                zTwo = weightsLayerTwo @ aOne + biasLayerTwo
+                aTwo = self.leakyRelu(zTwo)
+                zThree = weightsLayerThree @ aTwo + biasLayerThree
+                y = self.selu(zThree)
 
-                    c = y - actual
+                c = y - actual
 
-                    biasGradientThree = 2 * c * self.seluPrime(zThree)
-                    weightGradientThree = 2 * c * self.seluPrime(zThree) @ aTwo.T
+                biasGradientThree = 2 * c * self.seluPrime(zThree)
+                weightGradientThree = 2 * c * self.seluPrime(zThree) @ aTwo.T
 
-                    biasGradientTwo = (2 * c * self.seluPrime(zThree)).T @ weightsLayerThree * self.leakyReluPrime(zTwo)
-                    weightGradientTwo = (2 * c * self.seluPrime(zThree)).T @ weightsLayerThree * self.leakyReluPrime(zTwo) @ aOne
+                biasGradientTwo = (2 * c * self.seluPrime(zThree)).T @ weightsLayerThree * self.leakyReluPrime(zTwo)
+                weightGradientTwo = (2 * c * self.seluPrime(zThree)).T @ weightsLayerThree * self.leakyReluPrime(zTwo) @ aOne
 
-                    biasGradientOne = (2 * c * self.seluPrime(zThree)).T @ weightsLayerThree * self.leakyReluPrime(zTwo) @ weightsLayerTwo * self.tanhPrime(zOne)
-                    weightGradientOne = (2 * c * self.seluPrime(zThree)).T @ weightsLayerThree * self.leakyReluPrime(zTwo) @ weightsLayerTwo * self.tanhPrime(zOne) @ input
+                biasGradientOne = (2 * c * self.seluPrime(zThree)).T @ weightsLayerThree * self.leakyReluPrime(zTwo) @ weightsLayerTwo * self.tanhPrime(zOne)
+                weightGradientOne = (2 * c * self.seluPrime(zThree)).T @ weightsLayerThree * self.leakyReluPrime(zTwo) @ weightsLayerTwo * self.tanhPrime(zOne) @ input
 
-                    biasGradientThree[biasGradientThree > 1] = 1
-                    biasGradientThree[biasGradientThree < -1] = -1
+                biasGradientThree[biasGradientThree > 1] = 1
+                biasGradientThree[biasGradientThree < -1] = -1
 
-                    biasGradientTwo[biasGradientTwo > 1] = 1
-                    biasGradientTwo[biasGradientTwo < -1] = -1
+                biasGradientTwo[biasGradientTwo > 1] = 1
+                biasGradientTwo[biasGradientTwo < -1] = -1
 
-                    biasGradientOne[biasGradientOne > 1] = 1
-                    biasGradientOne[biasGradientOne  < -1] = -1
+                biasGradientOne[biasGradientOne > 1] = 1
+                biasGradientOne[biasGradientOne  < -1] = -1
 
-                    weightGradientThree[weightGradientThree > 1] = 1
-                    weightGradientThree[weightGradientThree < -1] = -1
+                weightGradientThree[weightGradientThree > 1] = 1
+                weightGradientThree[weightGradientThree < -1] = -1
 
-                    weightGradientTwo[weightGradientTwo > 1] = 1
-                    weightGradientTwo[weightGradientTwo < -1] = -1
+                weightGradientTwo[weightGradientTwo > 1] = 1
+                weightGradientTwo[weightGradientTwo < -1] = -1
 
-                    weightGradientOne[weightGradientOne > 1] = 1
-                    weightGradientOne[weightGradientOne < -1] = -1
+                weightGradientOne[weightGradientOne > 1] = 1
+                weightGradientOne[weightGradientOne < -1] = -1
 
-                    array_sum = nn.sum(biasGradientThree)
-                    if nn.isnan(array_sum):
-                        break
-                    array_sum = nn.sum(weightGradientThree)
-                    if nn.isnan(array_sum):
-                        break
-                    array_sum = nn.sum(biasGradientTwo)
-                    if nn.isnan(array_sum):
-                        break
-                    array_sum = nn.sum(weightGradientTwo)
-                    if nn.isnan(array_sum):
-                        break
-                    array_sum = nn.sum(biasGradientOne)
-                    if nn.isnan(array_sum):
-                        break
-                    array_sum = nn.sum(weightGradientOne)
-                    if nn.isnan(array_sum):
-                        break
+                array_sum = nn.sum(biasGradientThree)
+                if nn.isnan(array_sum):
+                    break
+                array_sum = nn.sum(weightGradientThree)
+                if nn.isnan(array_sum):
+                    break
+                array_sum = nn.sum(biasGradientTwo)
+                if nn.isnan(array_sum):
+                    break
+                array_sum = nn.sum(weightGradientTwo)
+                if nn.isnan(array_sum):
+                    break
+                array_sum = nn.sum(biasGradientOne)
+                if nn.isnan(array_sum):
+                    break
+                array_sum = nn.sum(weightGradientOne)
+                if nn.isnan(array_sum):
+                    break
 
-                    biasLayerThree = biasLayerThree - (learnRate * biasGradientThree)
-                    weightsLayerThree = weightsLayerThree - (learnRate * weightGradientThree)
+                biasLayerThree = biasLayerThree - (learnRate * biasGradientThree)
+                weightsLayerThree = weightsLayerThree - (learnRate * weightGradientThree)
 
-                    biasLayeTwo = biasLayerTwo - (learnRate * biasGradientTwo)
-                    weightsLayerTwo = weightsLayerTwo - (learnRate * weightGradientTwo)
+                biasLayeTwo = biasLayerTwo - (learnRate * biasGradientTwo)
+                weightsLayerTwo = weightsLayerTwo - (learnRate * weightGradientTwo)
 
-                    biasLayeOne = biasLayerOne - (learnRate * biasGradientOne)
-                    weightsLayerOne = weightsLayerOne - (learnRate * weightGradientOne)
+                biasLayeOne = biasLayerOne - (learnRate * biasGradientOne)
+                weightsLayerOne = weightsLayerOne - (learnRate * weightGradientOne)
 
-                    cost += c
+                c[c < -1] = c[c < -1] * -1
 
-                cost = cost.flatten()
-                cost[cost < 0] = cost[cost < 0] * -1
-                total = cost.sum()
+                cost += c.sum()
 
-                X.append(i)
-                Y.append(total)
+            if cost < minimum:
 
-                if total < minimum:
+                for y in range(0,64):
+                    for x in range(0,64):
 
-                    for y in range(0,64):
-                        for x in range(0,64):
+                        self.weights[y][x] = weightsLayerOne[y][x]
 
-                            self.weights[y][x] = weightsLayerOne[y][x]
+                for y in range(0,64):
+                    for x in range(0,1):
 
-                    for y in range(0,64):
-                        for x in range(0,1):
+                        self.bias[y][x] = biasLayerOne[y][x]
 
-                            self.bias[y][x] = biasLayerOne[y][x]
+                for y in range(0,64):
+                    for x in range(64,128):
 
-                    for y in range(0,64):
-                        for x in range(64,128):
+                        self.weights[y][x] = weightsLayerTwo[y][x-64]
 
-                            self.weights[y][x] = weightsLayerTwo[y][x-64]
+                for y in range(0,64):
+                    for x in range(1,2):
 
-                    for y in range(0,64):
-                        for x in range(1,2):
+                        self.bias[y][x] = biasLayerTwo[y][x-1]
 
-                            self.bias[y][x] = biasLayerTwo[y][x-1]
+                for y in range(0, 4):
+                    for x in range(128,192):
 
-                    for y in range(0, 4):
-                        for x in range(128,192):
+                        self.weights[y][x] = weightsLayerThree[y][x-128]
 
-                            self.weights[y][x] = weightsLayerThree[y][x-128]
+                for y in range(0, 4):
+                    for x in range(2, 3):
 
-                    for y in range(0, 4):
-                        for x in range(2, 3):
+                        self.bias[y][x] = biasLayerThree[y][x-2]
 
-                            self.bias[y][x] = biasLayerThree[y][x-2]
+                self.saveEngine(engine)
 
-                    self.saveEngine(engine)
-
-                    minimum = total
-
-                else:
-
-                    learnRate += 1e-5
-        if plot:
-
-            plt.plot(X,Y)
-            plt.show()
-
-        return cost
+                minimum = cost
 
     def tanh(self, input):
 

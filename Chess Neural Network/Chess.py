@@ -1,16 +1,17 @@
+
 import multiprocessing
 import threading
 import pygame
 from pygame.locals import *
 import os
 import os.path
+import random
 import time
 from tkinter import Tk
 import math
 from copy import deepcopy
+import numpy
 import NeuralNet
-import numpy as np
-import random
 
 class Board():
 
@@ -134,6 +135,10 @@ class Pieces():
         self.black_occupation_y = [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1]
 
         self.en_passant_x_y = [8, 8]
+
+        self.half_moves = 0
+        self.half_move_limit = False
+        self.turn_num = 1
 
     def draw_pieces_white(self):
 
@@ -4127,6 +4132,11 @@ class Pieces():
     def move_piece(self, notation_val, take):
 
         self.en_passant_x_y = [8, 8]
+        self.half_moves += 1
+
+        if startup.white_turn == False:
+
+            self.turn_num += 1
 
         if notation_val[0] == "B":
 
@@ -4325,6 +4335,12 @@ class Pieces():
                             self.black_rooks_inf[i][1] = 7
 
         else:
+
+            self.half_moves = 0
+
+            repetition_draw_file_write = open("repetition_draw_file.txt", "w")
+            repetition_draw_file_write.write("")
+            repetition_draw_file_write.close()
 
             if notation_val[-2] == "=":
 
@@ -4544,6 +4560,12 @@ class Pieces():
                                 self.en_passant_x_y = [to_x, to_y]
 
         if take == True:
+
+            self.half_moves = 0
+
+            repetition_draw_file_write = open("repetition_draw_file.txt", "w")
+            repetition_draw_file_write.write("")
+            repetition_draw_file_write.close()
 
             peice_taken = False
 
@@ -5634,6 +5656,36 @@ class Pieces():
 
             return "none"
 
+    def no_moves(self):
+
+        check_mate = self.stale_check_mate()
+
+        if check_mate == True:
+
+            if startup.white_turn == True:
+
+                print("Black wins by Checkmate!")
+
+                if startup.save_game_data == True:
+
+                    startup.game_save_winner = 1
+
+            else:
+
+                print("White wins by Checkmate!")
+
+                if startup.save_game_data == True:
+
+                    startup.game_save_winner = -1
+
+        else:
+
+            print("It's a draw by stalemate!")
+
+            if startup.save_game_data == True:
+
+                startup.game_save_winner = 0
+
 class Notation():
 
     def __init__(self):
@@ -6291,9 +6343,46 @@ class Notation():
 
                     pieces.en_passant_x_y[0] = self.get_column_char(char)
 
+    def save_notation_for_repetition(self):
+
+        draw_by_repetition = False
+
+        fen = self.create_fen_position()
+        fen = fen[:fen.find(" ")]
+
+        repetition_draw_file_append = open("repetition_draw_file.txt", "a")
+
+        repetition_draw_file_append.write(fen + "\n")
+
+        repetition_draw_file_append.close()
+
+        repeat_num = 0
+
+        repetition_draw_file_read = open("repetition_draw_file.txt", "r")
+
+        for line in repetition_draw_file_read:
+
+            if line == fen + "\n":
+
+                repeat_num += 1
+
+        repetition_draw_file_read.close()
+
+        if repeat_num >= 3:
+
+            draw_by_repetition = True
+
+            repetition_draw_file_write = open("repetition_draw_file.txt", "w")
+            repetition_draw_file_write.write("")
+            repetition_draw_file_write.close()
+
+        return draw_by_repetition
+
 class Start():
 
     def __init__(self):
+
+        self.game_save_winner = None
 
         root = Tk()
 
@@ -6309,18 +6398,72 @@ class Start():
         self.tile_size = self.screen_height // 8
 
         self.run = True
-        self.update = True
+        self.update = False
         self.white_turn = True
         self.playing_as_white = True
         self.auto_rotate = False
         self.your_turn = True
 
-    def start(self, train=False):
+        self.save_game_data = False
 
-        if train:
+        self.auto_move = False
+        self.one_player = False
+        self.two_player = False
 
-            engine.backwardChess(1, plot=True)
-            engine.backwardChess(2, plot=True)
+        self.move_choice = ""
+
+        if not os.path.exists("repetition_draw_file.txt"):
+
+            open("repetition_draw_file.txt", "a").close()
+
+        else:
+
+            repetition_draw_file_write = open("repetition_draw_file.txt", "w")
+            repetition_draw_file_write.write("")
+            repetition_draw_file_write.close()
+
+    def start(self):
+
+        self.player_customisations_thread = threading.Thread(target = self.player_customisations_func)
+        self.player_customisations_thread.start()
+
+        while self.run:
+
+            pygame.display.update()
+
+            for event in pygame.event.get():
+
+                if event.type == pygame.QUIT:
+
+                    self.run = False
+
+            if self.update == True:
+
+                self.update = False
+
+                if self.save_game_data == True:
+
+                    self.game_save_list = os.listdir(f"Data/Game{self.game_save_number+1}")
+                    self.game_save_amount = len(self.game_save_list)
+
+                if self.auto_move == True:
+
+                    self.auto_move_thread = threading.Thread(target = self.auto_move_func)
+                    self.auto_move_thread.start()
+
+                elif self.one_player == True:
+
+                    self.one_player_thread = threading.Thread(target = self.one_player_func)
+                    self.one_player_thread.start()
+
+                elif self.two_player == True:
+
+                    self.two_player_thread = threading.Thread(target = self.two_player_func)
+                    self.two_player_thread.start()
+
+        pygame.quit()
+
+    def player_customisations_func(self):
 
         board.draw_board()
         pieces.draw_pieces_white()
@@ -6347,10 +6490,6 @@ class Start():
             except:
 
                 print("That is not a valid number.")
-
-        self.auto_move = False
-        self.one_player = False
-        self.two_player = False
 
         if player_amount == 0:
 
@@ -6452,6 +6591,35 @@ class Start():
 
                 print("That is not a valid answer.")
 
+        while True:
+
+            print("Would you like to save this game's data? (y/n)")
+            save_game_data_input = input()
+
+            if save_game_data_input == "y":
+
+                self.save_game_data = True
+
+                if not os.path.exists(f"Data"):
+
+                    os.mkdir(f"Data")
+
+                self.game_save_list = os.listdir(f"Data")
+                self.game_save_number = len(self.game_save_list)
+                self.game_save_winner = None
+
+                os.mkdir(f"Data/Game{self.game_save_number+1}")
+
+                break
+
+            elif save_game_data_input == "n":
+
+                break
+
+            else:
+
+                print("That is not a valid answer.")
+
         if self.playing_as_white == True:
 
             pieces.draw_pieces_white()
@@ -6460,196 +6628,101 @@ class Start():
 
             pieces.draw_pieces_black()
 
+        self.update = True
 
-        list = os.listdir(f"Data")
-        number = len(list)
+    def auto_move_func(self):
 
-        os.mkdir(f"Data/Game{number+1}")
+        pieces.white_black_occupation()
+        pieces.calc_legal_moves()
+        pieces.check_checks()
 
-        self.winner = None
+        if len(pieces.legal_moves) > 0:
 
-        while self.run:
+            if pieces.half_move_limit == True:
 
+                print("It's a draw by too many moves!")
 
-            list = os.listdir(f"Data/Game{number+1}")
-            amount = len(list)
+                self.auto_move = False
 
-            for event in pygame.event.get():
+            else:
 
-                if event.type == pygame.QUIT:
+                time.sleep(0)
 
-                    self.run = False
+                self.move_choice = engine.engine()
 
-            if self.update == True:
+                notation_val, take = pieces.convert_to_easy_notation(self.move_choice)
+                pieces.move_piece(notation_val, take)
 
-                pygame.display.update()
-                self.update = False
+                if pieces.half_moves >= 100:
 
-            if self.auto_move == True:
+                    pieces.half_move_limit = True
 
-                pieces.white_black_occupation()
-                pieces.calc_legal_moves()
-                pieces.check_checks()
+                self.white_turn = not self.white_turn
 
-                if len(pieces.legal_moves) > 0:
+                board.draw_board()
 
-                    time.sleep(0.2)
+                if self.playing_as_white == True:
 
-                    pieces.convert_pieces_to_matrix()
-
-                    move_choice = Engine.engine()
-
-                    notation_val, take = pieces.convert_to_easy_notation(move_choice)
-                    pieces.move_piece(notation_val, take)
-
-                    self.white_turn = not self.white_turn
-
-                    board.draw_board()
-
-                    if self.playing_as_white == True:
-
-                        pieces.draw_pieces_white()
-
-                    else:
-
-                        pieces.draw_pieces_black()
-
-                    self.update = True
+                    pieces.draw_pieces_white()
 
                 else:
 
-                    check_mate = pieces.stale_check_mate()
+                    pieces.draw_pieces_black()
 
-                    if check_mate == True:
+                draw_by_repetition = notation.save_notation_for_repetition()
 
-                        if self.white_turn == True:
+                if draw_by_repetition == True:
 
-                            print("Black wins by Checkmate!")
-                            self.winner = 1
+                    print("It's a draw by repetition!")
 
-                        else:
+                    if startup.save_game_data == True:
 
-                            print("White wins by Checkmate!")
-                            self.winner = -1
-                    else:
-
-                        print("It's a draw by stalemate!")
-
-                        self.winner = 0
+                        startup.game_save_winner = 0
 
                     self.auto_move = False
 
-                os.mkdir(f"Data/Game{number+1}/Position{amount+1}")
-                np.save(f"Data/Game{number+1}/Position{amount+1}/Board.npy", np.asarray(pieces.convert_pieces_to_matrix()))
-                np.save(f"Data/Game{number+1}/Position{amount+1}/Move.npy", np.asarray(move_choice))
-                np.save(f"Data/Game{number+1}/Position{amount+1}/Turn.npy", np.asarray([self.white_turn]))
+                if self.save_game_data == True:
 
-                if self.winner != None:
-                    np.save(f"Data/Game{number+1}/Winner.npy", np.asarray([self.winner]))
-                    time.sleep(5)
-                    exit()
+                    self.save_game_data_func()
 
-            elif self.one_player == True:
+                self.update = True
 
-                pieces.white_black_occupation()
-                pieces.calc_legal_moves()
-                pieces.check_checks()
+        else:
 
-                if len(pieces.legal_moves) > 0:
+            pieces.no_moves()
 
-                    if self.your_turn == True:
+            if self.save_game_data == True:
 
-                        print(pieces.legal_moves)
+                self.save_game_data_func()
 
-                        while True:
+            self.auto_move = False
 
-                            print("Choose a move! (Copy the move exactly)")
-                            move_choice = input()
+    def one_player_func(self):
 
-                            if move_choice in pieces.legal_moves:
+        pieces.white_black_occupation()
+        pieces.calc_legal_moves()
+        pieces.check_checks()
 
-                                break
+        if len(pieces.legal_moves) > 0:
 
-                            else:
+            if pieces.half_move_limit == True:
 
-                                print("That is not a valid move.")
+                print("It's a draw by too many moves!")
 
-                    else:
+                self.one_player = False
 
-                        time.sleep(0.5)
+            else:
 
-                        pieces.convert_pieces_to_matrix()
-
-                        move_choice = Engine.engine()
-
-                    self.your_turn = not self.your_turn
-
-                    notation_val, take = pieces.convert_to_easy_notation(move_choice)
-                    pieces.move_piece(notation_val, take)
-
-                    self.white_turn = not self.white_turn
-
-                    board.draw_board()
-
-                    if self.playing_as_white == True:
-
-                        pieces.draw_pieces_white()
-
-                    else:
-
-                        pieces.draw_pieces_black()
-
-                    self.update = True
-
-                else:
-
-                    check_mate = pieces.stale_check_mate()
-
-                    if check_mate == True:
-
-                        if self.white_turn == True:
-
-                            print("Black wins by Checkmate!")
-                            self.winner = 1
-
-                        else:
-
-                            print("White wins by Checkmate!")
-                            self.winner = -1
-                    else:
-
-                        print("It's a draw by stalemate!")
-
-                        self.winner = 0
-
-                    self.one_player = False
-
-                os.mkdir(f"Data/Game{number+1}/Position{amount+1}")
-                np.save(f"Data/Game{number+1}/Position{amount+1}/Board.npy", np.asarray(pieces.convert_pieces_to_matrix()))
-                np.save(f"Data/Game{number+1}/Position{amount+1}/Move.npy", np.asarray(move_choice))
-                np.save(f"Data/Game{number+1}/Position{amount+1}/Turn.npy", np.asarray([self.white_turn]))
-
-                if self.winner != None:
-                    np.save(f"Data/Game{number+1}/Winner.npy", np.asarray([self.winner]))
-                    time.sleep(5)
-                    exit()
-
-            elif self.two_player == True:
-
-                pieces.white_black_occupation()
-                pieces.calc_legal_moves()
-                pieces.check_checks()
-
-                if len(pieces.legal_moves) > 0:
+                if self.your_turn == True:
 
                     print(pieces.legal_moves)
 
                     while True:
 
                         print("Choose a move! (Copy the move exactly)")
-                        move_choice = input()
+                        self.move_choice = input()
 
-                        if move_choice in pieces.legal_moves:
+                        if self.move_choice in pieces.legal_moves:
 
                             break
 
@@ -6657,66 +6730,235 @@ class Start():
 
                             print("That is not a valid move.")
 
-                    notation_val, take = pieces.convert_to_easy_notation(move_choice)
-                    pieces.move_piece(notation_val, take)
+                else:
 
-                    self.white_turn = not self.white_turn
+                    time.sleep(0)
 
-                    board.draw_board()
+                    self.move_choice = engine.engine()
 
-                    if self.auto_rotate == True:
+                self.your_turn = not self.your_turn
 
-                        self.playing_as_white = self.white_turn
+                notation_val, take = pieces.convert_to_easy_notation(self.move_choice)
+                pieces.move_piece(notation_val, take)
 
-                    if self.playing_as_white == True:
+                if pieces.half_moves >= 100:
 
-                        pieces.draw_pieces_white()
+                    pieces.half_move_limit = True
 
-                    else:
+                self.white_turn = not self.white_turn
 
-                        pieces.draw_pieces_black()
+                board.draw_board()
 
-                    fen = notation.create_fen_position()
+                if self.playing_as_white == True:
 
-                    self.update = True
+                    pieces.draw_pieces_white()
 
                 else:
 
-                    check_mate = pieces.stale_check_mate()
+                    pieces.draw_pieces_black()
 
-                    if check_mate == True:
+                draw_by_repetition = notation.save_notation_for_repetition()
 
-                        if self.white_turn == True:
+                if draw_by_repetition == True:
 
-                            print("Black wins by Checkmate!")
-                            self.winner = 1
+                    print("It's a draw by repetition!")
 
-                        else:
+                    if startup.save_game_data == True:
 
-                            print("White wins by Checkmate!")
-                            self.winner = -1
+                        startup.game_save_winner = 0
+
+                    self.one_player = False
+
+                if self.save_game_data == True:
+
+                    self.save_game_data_func()
+
+                self.update = True
+
+        else:
+
+            pieces.no_moves()
+
+            if self.save_game_data == True:
+
+                self.save_game_data_func()
+
+            self.one_player = False
+
+    def two_player_func(self):
+
+        pieces.white_black_occupation()
+        pieces.calc_legal_moves()
+        pieces.check_checks()
+
+        if len(pieces.legal_moves) > 0:
+
+            if pieces.half_move_limit == True:
+
+                print("It's a draw by too many moves!")
+
+                self.two_player = False
+
+            else:
+
+                print(pieces.legal_moves)
+
+                while True:
+
+                    print("Choose a move! (Copy the move exactly)")
+                    self.move_choice = input()
+
+                    if self.move_choice in pieces.legal_moves:
+
+                        break
+
                     else:
 
-                        print("It's a draw by stalemate!")
+                        print("That is not a valid move.")
 
-                        self.winner = 0
+                notation_val, take = pieces.convert_to_easy_notation(self.move_choice)
+                pieces.move_piece(notation_val, take)
+
+                if pieces.half_moves >= 100:
+
+                    pieces.half_move_limit = True
+
+                self.white_turn = not self.white_turn
+
+                board.draw_board()
+
+                if self.auto_rotate == True:
+
+                    self.playing_as_white = self.white_turn
+
+                if self.playing_as_white == True:
+
+                    pieces.draw_pieces_white()
+
+                else:
+
+                    pieces.draw_pieces_black()
+
+                draw_by_repetition = notation.save_notation_for_repetition()
+
+                if draw_by_repetition == True:
+
+                    print("It's a draw by repetition!")
+
+                    if startup.save_game_data == True:
+
+                        startup.game_save_winner = 0
 
                     self.two_player = False
 
-                os.mkdir(f"Data/Game{number+1}/Position{amount+1}")
-                np.save(f"Data/Game{number+1}/Position{amount+1}/Board.npy", np.asarray(pieces.convert_pieces_to_matrix()))
-                np.save(f"Data/Game{number+1}/Position{amount+1}/Move.npy", np.asarray(move_choice))
-                np.save(f"Data/Game{number+1}/Position{amount+1}/Turn.npy", np.asarray([self.white_turn]))
+                if self.save_game_data == True:
 
-                if self.winner != None:
-                    np.save(f"Data/Game{number+1}/Winner.npy", np.asarray([self.winner]))
-                    time.sleep(5)
-                    exit()
+                    self.save_game_data_func()
 
-        pygame.quit()
+                self.update = True
+
+        else:
+
+            pieces.no_moves()
+
+            if self.save_game_data == True:
+
+                self.save_game_data_func()
+
+            self.two_player = False
+
+    def save_game_data_func(self):
+
+        os.mkdir(f"Data/Game{self.game_save_number+1}/Position{self.game_save_amount+1}")
+        numpy.save(f"Data/Game{self.game_save_number+1}/Position{self.game_save_amount+1}/Board.npy", numpy.asarray(pieces.convert_pieces_to_matrix()))
+        numpy.save(f"Data/Game{self.game_save_number+1}/Position{self.game_save_amount+1}/Move.npy", numpy.asarray(self.move_choice))
+        numpy.save(f"Data/Game{self.game_save_number+1}/Position{self.game_save_amount+1}/Turn.npy", numpy.asarray([self.white_turn]))
+
+        if self.game_save_winner != None:
+
+            # calculates the winner based on the amount of material left
+            if self.game_save_winner == 0:
+
+                white_points = 0
+
+                num_of_white_pawns = len(pieces.white_pawns_inf)
+                for i in range(0, num_of_white_pawns):
+
+                    if pieces.white_pawns_inf[i][2] == True:
+                        white_points += 1
+
+                num_of_white_knights = len(pieces.white_knights_inf)
+                for i in range(0, num_of_white_knights):
+
+                    if pieces.white_knights_inf[i][2] == True:
+                        white_points += 3
+
+                num_of_white_bishops = len(pieces.white_bishops_inf)
+                for i in range(0, num_of_white_bishops):
+
+                    if pieces.white_bishops_inf[i][2] == True:
+                        white_points += 3.5
+
+                num_of_white_rooks = len(pieces.white_rooks_inf)
+                for i in range(0, num_of_white_rooks):
+
+                    if pieces.white_rooks_inf[i][2] == True:
+                        white_points += 5
+
+                num_of_white_queens = len(pieces.white_queens_inf)
+                for i in range(0, num_of_white_queens):
+
+                    if pieces.white_queens_inf[i][2] == True:
+                        white_points += 8
+
+                black_points = 0
+
+                num_of_black_pawns = len(pieces.black_pawns_inf)
+                for i in range(0, num_of_black_pawns):
+
+                    if pieces.black_pawns_inf[i][2] == True:
+                        black_points += 1
+
+                num_of_black_knights = len(pieces.black_knights_inf)
+                for i in range(0, num_of_black_knights):
+
+                    if pieces.black_knights_inf[i][2] == True:
+                        black_points += 3
+
+                num_of_black_bishops = len(pieces.black_bishops_inf)
+                for i in range(0, num_of_black_bishops):
+
+                    if pieces.black_bishops_inf[i][2] == True:
+                        black_points += 3.5
+
+                num_of_black_rooks = len(pieces.black_rooks_inf)
+                for i in range(0, num_of_black_rooks):
+
+                    if pieces.black_rooks_inf[i][2] == True:
+                        black_points += 5
+
+                num_of_black_queens = len(pieces.black_queens_inf)
+                for i in range(0, num_of_black_queens):
+
+                    if pieces.black_queens_inf[i][2] == True:
+                        black_points += 8
+
+                if white_points > black_points:
+
+                    self.game_save_winner = 1
+
+                elif black_points > white_points:
+
+                    self.game_save_winner = -1
+
+                else:
+
+                    self.game_save_winner = 0
+
+            numpy.save(f"Data/Game{self.game_save_number+1}/Winner.npy", numpy.asarray([self.game_save_winner]))
 
 startup = Start()
 board = Board()
 pieces = Pieces()
 notation = Notation()
-Engine = NeuralNet.NeuralNetwork()
+engine =  NeuralNet.NeuralNetwork()
