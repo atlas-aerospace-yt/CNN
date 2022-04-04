@@ -5910,7 +5910,7 @@ class Pieces():
 
                 if startup.save_game_data == True:
 
-                    startup.game_save_winner = 1
+                    startup.game_save_winner = -1
 
             else:
 
@@ -5918,7 +5918,7 @@ class Pieces():
 
                 if startup.save_game_data == True:
 
-                    startup.game_save_winner = -1
+                    startup.game_save_winner = 1
 
         else:
 
