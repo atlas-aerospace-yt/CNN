@@ -167,61 +167,65 @@ class DataOrganiser():
 
                             pass
 
-    def similarity(self, output, legal):
+    def similarity(self, output, legal, promotion=False):
 
-        min = 1e+2500
+        if not promotion:
 
-        if len(legal) > 1:
 
-            for i in range(0, len(legal)):
+            output = nn.delete(output, len(output) - 1)
+            min = 1e+2500
 
-                output = nn.asarray(output).flatten()
+            if len(legal) > 1:
 
-                if len(output) == 2:
-                    val = [0, 0]
-                    for item in output:
-                        val.append(item)
-                    output = val
-                if len(output) == 3:
-                    val = [0]
-                    for item in output:
-                        val.append(item)
-                    output = val
+                for i in range(0, len(legal)):
 
-                value = nn.asarray(legal[i])
-                value =  [int(d) for d in str(value)]
+                    output = nn.asarray(output).flatten()
 
-                if len(value) == 2:
-                    val = [0, 0]
-                    for item in value:
-                        val.append(item)
-                    value = val
-                if len(value) == 3:
-                    val = [0]
-                    for item in value:
-                        val.append(item)
-                    value = val
+                    if len(output) == 2:
+                        val = [0, 0]
+                        for item in output:
+                            val.append(item)
+                        output = val
+                    if len(output) == 3:
+                        val = [0]
+                        for item in output:
+                            val.append(item)
+                        output = val
 
-                diff = nn.asarray(output) - nn.asarray(value)
+                    value = nn.asarray(legal[i])
+                    value =  [int(d) for d in str(value)]
 
-                diff[diff < -1] = diff[diff < -1] * -1
+                    if len(value) == 2:
+                        val = [0, 0]
+                        for item in value:
+                            val.append(item)
+                        value = val
+                    if len(value) == 3:
+                        val = [0]
+                        for item in value:
+                            val.append(item)
+                        value = val
 
-                difference = diff.sum()
+                    diff = nn.asarray(output) - nn.asarray(value)
 
-                difference /= len(value)
+                    diff[diff < -1] = diff[diff < -1] * -1
 
-                if difference < min:
+                    difference = diff.sum()
 
-                    min = difference
-                    pos = i
+                    difference /= len(value)
 
-        elif len(legal) == 1:
-            return 0
+                    if difference < min:
 
-        else:
-            exit()
+                        min = difference
+                        pos = i
 
-        return pos
+            elif len(legal) == 1:
+                return 0
+
+            else:
+                exit()
+
+            return pos
 
 
 class NeuralNetwork():
@@ -282,8 +286,7 @@ class NeuralNetwork():
         self.loopCounter += 1
 
         if self.loopCounter % 25 == 0 or self.loopCounter == 1:
-            #self.data.organiseData()
-            pass
+            self.data.organiseData()
 
         actual_data = []
         legal_CoOrdinates = []
@@ -426,17 +429,17 @@ class NeuralNetwork():
 
                 biasLayerTwo[y][x-1] = self.bias[y][x]
 
-        weightsLayerThree = nn.zeros((4, 64))
+        weightsLayerThree = nn.zeros((5, 64))
 
-        for y in range(0, 4):
+        for y in range(0, 5):
 
             for x in range(128,192):
 
                 weightsLayerThree[y][x-128] = self.weights[y][x]
 
-        biasLayerThree = nn.zeros((4,1))
+        biasLayerThree = nn.zeros((5,1))
 
-        for y in range(0, 4):
+        for y in range(0, 5):
 
             for x in range(2, 3):
 
@@ -462,6 +465,8 @@ class NeuralNetwork():
         output = []
         for val in y:
             output.append(val[0])
+
+        print(output)
 
         output = legal[self.data.similarity(y, legal)]
 
@@ -504,21 +509,21 @@ class NeuralNetwork():
 
                 biasLayerTwo[y][x-1] = self.bias[y][x]
 
-        weightsLayerThree = nn.zeros((4, 64))
+        weightsLayerThree = nn.zeros((5, 64))
 
-        for y in range(0, 4):
+        for y in range(0, 5):
 
             for x in range(128,192):
 
                 weightsLayerThree[y][x-128] = self.weights[y][x]
 
-        biasLayerThree = nn.zeros((4,1))
+        biasLayerThree = nn.zeros((5,1))
 
-        for y in range(0, 4):
+        for y in range(0, 5):
 
             for x in range(2, 3):
 
-                biasLayerThree[y][x-3] = self.bias[y][x]
+                biasLayerThree[y][x-2] = self.bias[y][x]
 
         X = []
         Y = []
@@ -541,7 +546,6 @@ class NeuralNetwork():
                 board = nn.load(f"Engine{engine}/Training/{dir}/Board.npy")
 
                 actual = self.data.findMostCommonMove(dir, engine)
-                print(actual)
                 actual = nn.matrix(self.data.convertNotation(actual))
                 actual = actual.T
                 actual = nn.asarray(actual.astype(nn.float))
@@ -637,12 +641,12 @@ class NeuralNetwork():
 
                         self.bias[y][x] = biasLayerTwo[y][x-1]
 
-                for y in range(0, 4):
+                for y in range(0, 5):
                     for x in range(128,192):
 
                         self.weights[y][x] = weightsLayerThree[y][x-128]
 
-                for y in range(0, 4):
+                for y in range(0, 5):
                     for x in range(2, 3):
 
                         self.bias[y][x] = biasLayerThree[y][x-2]
