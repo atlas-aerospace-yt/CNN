@@ -35,7 +35,7 @@ if __name__ == "__main__":
         else:
             x = v([0.1,1,0.5])
             y = v([1])
-            
+
         w, b = backward_propagation(x, y, w, b)
 
     x = v([0.1,0.1,0.5])

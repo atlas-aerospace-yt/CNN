@@ -10,7 +10,8 @@ from tkinter import Tk
 import math
 from copy import deepcopy
 import numpy
-import NeuralNet
+
+import Engine as engine
 
 class Board():
 
@@ -454,7 +455,7 @@ class Pieces():
 
                 startup.screen.blit(self.white_pawn_img, self.white_pawn_img_rect)
 
-        for i in range(0, 2):
+        for i in range(0, 10):
 
             if self.white_bishops_inf[i][2] == True and self.white_bishops_inf[i][4] == False:
 
@@ -464,7 +465,7 @@ class Pieces():
 
                 startup.screen.blit(self.white_bishop_img, self.white_bishop_img_rect)
 
-        for i in range(0, 2):
+        for i in range(0, 10):
 
             if self.white_knights_inf[i][2] == True and self.white_knights_inf[i][4] == False:
 
@@ -474,7 +475,7 @@ class Pieces():
 
                 startup.screen.blit(self.white_knight_img, self.white_knight_img_rect)
 
-        for i in range(0, 2):
+        for i in range(0, 10):
 
             if self.white_rooks_inf[i][2] == True and self.white_rooks_inf[i][4] == False:
 
@@ -484,13 +485,15 @@ class Pieces():
 
                 startup.screen.blit(self.white_rook_img, self.white_rook_img_rect)
 
-        if self.white_queens_inf[0][2] == True and self.white_queens_inf[i][4] == False:
+        for i in range(0, 9):
 
-            self.white_queen_img_rect.x = self.white_queens_inf[0][0] * startup.tile_size
-            self.white_queen_img_rect.x = self.white_queen_img_rect.x - (self.white_queen_img_rect.x * 2) + (startup.screen_height - startup.tile_size)
-            self.white_queen_img_rect.y = self.white_queens_inf[0][1] * startup.tile_size
+            if self.white_queens_inf[i][2] == True and self.white_queens_inf[i][4] == False:
 
-            startup.screen.blit(self.white_queen_img, self.white_queen_img_rect)
+                self.white_queen_img_rect.x = self.white_queens_inf[i][0] * startup.tile_size
+                self.white_queen_img_rect.x = self.white_queen_img_rect.x - (self.white_queen_img_rect.x * 2) + (startup.screen_height - startup.tile_size)
+                self.white_queen_img_rect.y = self.white_queens_inf[i][1] * startup.tile_size
+
+                startup.screen.blit(self.white_queen_img, self.white_queen_img_rect)
 
         if self.white_king_inf[0][2] == True and self.white_king_inf[0][4] == False:
 
@@ -510,7 +513,7 @@ class Pieces():
 
                 startup.screen.blit(self.black_pawn_img, self.black_pawn_img_rect)
 
-        for i in range(0, 2):
+        for i in range(0, 10):
 
             if self.black_bishops_inf[i][2] == True and self.black_bishops_inf[i][4] == False:
 
@@ -520,7 +523,7 @@ class Pieces():
 
                 startup.screen.blit(self.black_bishop_img, self.black_bishop_img_rect)
 
-        for i in range(0, 2):
+        for i in range(0, 10):
 
             if self.black_knights_inf[i][2] == True and self.black_knights_inf[i][4] == False:
 
@@ -530,7 +533,7 @@ class Pieces():
 
                 startup.screen.blit(self.black_knight_img, self.black_knight_img_rect)
 
-        for i in range(0, 2):
+        for i in range(0, 10):
 
             if self.black_rooks_inf[i][2] == True and self.black_rooks_inf[i][4] == False:
 
@@ -540,13 +543,15 @@ class Pieces():
 
                 startup.screen.blit(self.black_rook_img, self.black_rook_img_rect)
 
-        if self.black_queens_inf[0][2] == True and self.black_queens_inf[i][4] == False:
+        for i in range(0, 9):
 
-            self.black_queen_img_rect.x = self.black_queens_inf[0][0] * startup.tile_size
-            self.black_queen_img_rect.x = self.black_queen_img_rect.x - (self.black_queen_img_rect.x * 2) + (startup.screen_height - startup.tile_size)
-            self.black_queen_img_rect.y = self.black_queens_inf[0][1] * startup.tile_size
+            if self.black_queens_inf[i][2] == True and self.black_queens_inf[i][4] == False:
 
-            startup.screen.blit(self.black_queen_img, self.black_queen_img_rect)
+                self.black_queen_img_rect.x = self.black_queens_inf[i][0] * startup.tile_size
+                self.black_queen_img_rect.x = self.black_queen_img_rect.x - (self.black_queen_img_rect.x * 2) + (startup.screen_height - startup.tile_size)
+                self.black_queen_img_rect.y = self.black_queens_inf[i][1] * startup.tile_size
+
+                startup.screen.blit(self.black_queen_img, self.black_queen_img_rect)
 
         if self.black_king_inf[0][2] == True and self.black_king_inf[0][4] == False:
 
@@ -615,6 +620,74 @@ class Pieces():
                 startup.screen.blit(self.little_white_rook_img, self.little_white_rook_img_rect)
                 startup.screen.blit(self.little_white_bishop_img, self.little_white_bishop_img_rect)
                 startup.screen.blit(self.little_white_knight_img, self.little_white_knight_img_rect)
+
+        for i in range(0, 8):
+
+            if self.white_pawns_inf[i][2] and self.white_pawns_inf[i][4]:
+
+                self.draw_dragged_piece(self.white_pawn_img, self.white_pawn_img_rect)
+
+        for i in range(0, 10):
+
+            if self.white_bishops_inf[i][2] and self.white_bishops_inf[i][4]:
+
+                self.draw_dragged_piece(self.white_bishop_img, self.white_bishop_img_rect)
+
+        for i in range(0, 10):
+
+            if self.white_knights_inf[i][2] and self.white_knights_inf[i][4]:
+
+                self.draw_dragged_piece(self.white_knight_img, self.white_knight_img_rect)
+
+        for i in range(0, 10):
+
+            if self.white_rooks_inf[i][2] and self.white_rooks_inf[i][4]:
+
+                self.draw_dragged_piece(self.white_rook_img, self.white_rook_img_rect)
+
+        for i in range(0, 9):
+
+            if self.white_queens_inf[i][2] and self.white_queens_inf[i][4]:
+
+                self.draw_dragged_piece(self.white_queen_img, self.white_queen_img_rect)
+
+        if self.white_king_inf[0][2] and self.white_king_inf[0][4]:
+
+            self.draw_dragged_piece(self.white_king_img, self.white_king_img_rect)
+
+        for i in range(0, 8):
+
+            if self.black_pawns_inf[i][2] and self.black_pawns_inf[i][4]:
+
+                self.draw_dragged_piece(self.black_pawn_img, self.black_pawn_img_rect)
+
+        for i in range(0, 10):
+
+            if self.black_bishops_inf[i][2] and self.black_bishops_inf[i][4]:
+
+                self.draw_dragged_piece(self.black_bishop_img, self.black_bishop_img_rect)
+
+        for i in range(0, 10):
+
+            if self.black_knights_inf[i][2] and self.black_knights_inf[i][4]:
+
+                self.draw_dragged_piece(self.black_knight_img, self.black_knight_img_rect)
+
+        for i in range(0, 10):
+
+            if self.black_rooks_inf[i][2] and self.black_rooks_inf[i][4]:
+
+                self.draw_dragged_piece(self.black_rook_img, self.black_rook_img_rect)
+
+        for i in range(0, 9):
+
+            if self.black_queens_inf[i][2] and self.black_queens_inf[i][4]:
+
+                self.draw_dragged_piece(self.black_queen_img, self.black_queen_img_rect)
+
+        if self.black_king_inf[0][2] and self.black_king_inf[0][4]:
+
+            self.draw_dragged_piece(self.black_king_img, self.black_king_img_rect)
 
     def white_black_occupation(self):
 
@@ -2878,8 +2951,6 @@ class Pieces():
 
                         self.legal_moves.append(move)
 
-        #print(self.legal_moves)
-
         self.legal_moves_move_notation = self.legal_moves
 
     def check_checks(self):
@@ -2906,14 +2977,6 @@ class Pieces():
             black_rooks = deepcopy(self.black_rooks_inf)
             black_queens = deepcopy(self.black_queens_inf)
             black_king = deepcopy(self.black_king_inf)
-
-            #en_passant_xy = deepcopy(self.en_passant_x_y)
-
-            #white_occ_x = deepcopy(self.white_occupation_x)
-            #white_occ_y = deepcopy(self.white_occupation_y)
-
-            #black_occ_x = deepcopy(self.black_occupation_x)
-            #black_occ_y = deepcopy(self.black_occupation_y)
 
             notation_val, take = self.convert_to_easy_notation(move)
 
@@ -4351,8 +4414,6 @@ class Pieces():
                     if "O-O-O" in self.legal_moves:
 
                         self.legal_moves.remove("O-O-O")
-
-        #print(self.legal_moves)
 
     def convert_to_easy_notation(self, notation_val):
 
@@ -5910,7 +5971,7 @@ class Pieces():
 
                 if startup.save_game_data == True:
 
-                    startup.game_save_winner = -1
+                    startup.game_save_winner = 1
 
             else:
 
@@ -5918,7 +5979,7 @@ class Pieces():
 
                 if startup.save_game_data == True:
 
-                    startup.game_save_winner = 1
+                    startup.game_save_winner = -1
 
         else:
 
@@ -6741,8 +6802,6 @@ class Notation():
 
         fen = self.create_fen_position()
 
-        #print(fen)
-
         fen = fen[:fen.find(" ")]
 
         repetition_draw_file_append = open("repetition_draw_file.txt", "a")
@@ -6854,8 +6913,6 @@ class Start():
 
         while self.run:
 
-            #if self.update_display:
-
             board.draw_board()
 
             if self.playing_as_white:
@@ -6867,8 +6924,6 @@ class Start():
                 pieces.draw_pieces_black()
 
             pygame.display.update()
-
-                #self.update_display = False
 
             for event in pygame.event.get():
 
@@ -8014,13 +8069,6 @@ class Start():
 
     def player_customisations_func(self):
 
-        #self.update_display = False
-
-        #board.draw_board()
-        #pieces.draw_pieces_white()
-
-        #self.update_display = True
-
         while self.run:
 
             print("How many players? (0-2)")
@@ -8120,20 +8168,6 @@ class Start():
 
                         print("That is not a valid position.")
 
-                self.update_display = False
-
-                board.draw_board()
-
-                if self.playing_as_white == True:
-
-                    pieces.draw_pieces_white()
-
-                else:
-
-                    pieces.draw_pieces_black()
-
-                self.update_display = True
-
                 break
 
             elif predetermined_position_input == "n":
@@ -8173,14 +8207,6 @@ class Start():
 
                 print("That is not a valid answer.")
 
-        if self.playing_as_white == True:
-
-            pieces.draw_pieces_white()
-
-        else:
-
-            pieces.draw_pieces_black()
-
         draw_by_insufficient_material = pieces.check_draw_by_insufficient_material()
 
         if draw_by_insufficient_material == True:
@@ -8218,7 +8244,9 @@ class Start():
 
                 time.sleep(0)
 
-                self.move_choice = engine.engine()
+                fen = notation.create_fen_position()
+
+                self.move_choice = engine.engine(pieces.final_legal_moves, fen)
 
                 pieces.final_legal_moves = []
 
@@ -8230,20 +8258,6 @@ class Start():
                     pieces.half_move_limit = True
 
                 self.white_turn = not self.white_turn
-
-                self.update_display = False
-
-                board.draw_board()
-
-                if self.playing_as_white == True:
-
-                    pieces.draw_pieces_white()
-
-                else:
-
-                    pieces.draw_pieces_black()
-
-                self.update_display = True
 
                 draw_by_insufficient_material = pieces.check_draw_by_insufficient_material()
 
@@ -8302,11 +8316,7 @@ class Start():
 
                 if self.your_turn == True:
 
-                    print(pieces.final_legal_moves)
-
                     while self.run:
-
-                        print("Choose a move! (Copy the move exactly)")
 
                         while self.run and self.move_choice == "":
 
@@ -8318,15 +8328,13 @@ class Start():
 
                             break
 
-                        else:
-
-                            print("That is not a valid move.")
-
                 else:
 
                     time.sleep(0)
 
-                    self.move_choice = engine.engine()
+                    fen = notation.create_fen_position()
+
+                    self.move_choice = engine.engine(pieces.final_legal_moves, fen)
 
                     pieces.final_legal_moves = []
 
@@ -8342,20 +8350,6 @@ class Start():
                     pieces.half_move_limit = True
 
                 self.white_turn = not self.white_turn
-
-                self.update_display = False
-
-                board.draw_board()
-
-                if self.playing_as_white == True:
-
-                    pieces.draw_pieces_white()
-
-                else:
-
-                    pieces.draw_pieces_black()
-
-                self.update_display = True
 
                 draw_by_insufficient_material = pieces.check_draw_by_insufficient_material()
 
@@ -8412,19 +8406,11 @@ class Start():
 
             else:
 
-                print(pieces.final_legal_moves)
-
                 while self.run:
-
-                    print("Choose a move! (Copy the move exactly)")
 
                     while self.run and self.move_choice == "":
 
                         pass
-
-                    #self.move_choice = input()
-
-                    #if self.move_choice in pieces.final_legal_moves:
 
                     if self.move_choice in pieces.final_legal_moves:
 
@@ -8432,14 +8418,9 @@ class Start():
 
                         break
 
-                    else:
-
-                        print("That is not a valid move.")
-
                 notation_val, take = pieces.convert_to_easy_notation(self.move_choice)
                 self.move_choice = ""
 
-                #notation_val, take = pieces.convert_to_easy_notation(self.move_choice)
                 pieces.move_piece(notation_val, take)
 
                 if pieces.half_moves >= 100:
@@ -8451,20 +8432,6 @@ class Start():
                 if self.auto_rotate == True:
 
                     self.playing_as_white = self.white_turn
-
-                self.update_display = False
-
-                board.draw_board()
-
-                if self.playing_as_white == True:
-
-                    pieces.draw_pieces_white()
-
-                else:
-
-                    pieces.draw_pieces_black()
-
-                self.update_display = True
 
                 draw_by_insufficient_material = pieces.check_draw_by_insufficient_material()
 
@@ -8586,90 +8553,9 @@ class Start():
 
         if self.game_save_winner != None:
 
-            # calculates the winner based on the amount of material left
-            if self.game_save_winner == 0:
-
-                white_points = 0
-
-                num_of_white_pawns = len(pieces.white_pawns_inf)
-                for i in range(0, num_of_white_pawns):
-
-                    if pieces.white_pawns_inf[i][2] == True:
-                        white_points += 1
-
-                num_of_white_knights = len(pieces.white_knights_inf)
-                for i in range(0, num_of_white_knights):
-
-                    if pieces.white_knights_inf[i][2] == True:
-                        white_points += 3
-
-                num_of_white_bishops = len(pieces.white_bishops_inf)
-                for i in range(0, num_of_white_bishops):
-
-                    if pieces.white_bishops_inf[i][2] == True:
-                        white_points += 3.5
-
-                num_of_white_rooks = len(pieces.white_rooks_inf)
-                for i in range(0, num_of_white_rooks):
-
-                    if pieces.white_rooks_inf[i][2] == True:
-                        white_points += 5
-
-                num_of_white_queens = len(pieces.white_queens_inf)
-                for i in range(0, num_of_white_queens):
-
-                    if pieces.white_queens_inf[i][2] == True:
-                        white_points += 8
-
-                black_points = 0
-
-                num_of_black_pawns = len(pieces.black_pawns_inf)
-                for i in range(0, num_of_black_pawns):
-
-                    if pieces.black_pawns_inf[i][2] == True:
-                        black_points += 1
-
-                num_of_black_knights = len(pieces.black_knights_inf)
-                for i in range(0, num_of_black_knights):
-
-                    if pieces.black_knights_inf[i][2] == True:
-                        black_points += 3
-
-                num_of_black_bishops = len(pieces.black_bishops_inf)
-                for i in range(0, num_of_black_bishops):
-
-                    if pieces.black_bishops_inf[i][2] == True:
-                        black_points += 3.5
-
-                num_of_black_rooks = len(pieces.black_rooks_inf)
-                for i in range(0, num_of_black_rooks):
-
-                    if pieces.black_rooks_inf[i][2] == True:
-                        black_points += 5
-
-                num_of_black_queens = len(pieces.black_queens_inf)
-                for i in range(0, num_of_black_queens):
-
-                    if pieces.black_queens_inf[i][2] == True:
-                        black_points += 8
-
-                if white_points > black_points:
-
-                    self.game_save_winner = 1
-
-                elif black_points > white_points:
-
-                    self.game_save_winner = -1
-
-                else:
-
-                    self.game_save_winner = 0
-
-            print(self.game_save_winner)
             numpy.save(f"Data/Game{self.game_save_number+1}/Winner.npy", numpy.asarray([self.game_save_winner]))
 
 startup = Start()
 board = Board()
 pieces = Pieces()
 notation = Notation()
-engine = NeuralNet.NeuralNetwork()
