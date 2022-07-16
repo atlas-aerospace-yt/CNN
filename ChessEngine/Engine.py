@@ -1,17 +1,35 @@
+#
+#   16/07/2022
+#
+#   Chess Engine using K-means clustering algorithm
+#   SQL Database to save positions to analyse
+#   Unsupervised learning
+#
+#   ## TODO: make all class and function names camelCase
+#   ## TODO: create the data base features to be used by the engine
+#   ## TODO: fix the database insert function: currently throws error
+#
+#   Written by:
+#   Alexander Armitage
+#
+
+from Data import ChessDatabase
+import random
 
 # Chess engine class
 class Engine():
 
+    # Initialises classes variables
     def __init__(self):
-        pass
+        self.columns = ["a","b","c","d","e","f","g","h",]
 
-    # returns list of pieces in the shape of a board
+    # Returns list of pieces in the shape of a board
     def fen_to_matrix(self, fen):
         position = fen.split(" ")[0].split("/")
 
         pawn = 0.1
         knight = 0.3
-        bishop = 0.3
+        bishop = 0.35
         rook = 0.5
         queen = 0.9
         king = 1.0
@@ -58,19 +76,187 @@ class Engine():
 
         return position_matrix
 
-    def make_move(self, position, move,, turn):
-        colums = ["a","b","c","d","e","f","g","h",]
+    # Updates position matrix if move is a pawn push
+    def pawn_push(self, position, move, turn):
+        row = 0
+        current_before_row = 0
+        if turn == "w":
+            pawn_value = 0.1
+            if "=" in move:
+                promotion = move.split("=")[1]
+                if promotion == "Q":
+                    pawn_value = 0.9
+                elif promotion == "R":
+                    pawn_value = 0.5
+                elif promotion == "B":
+                    pawn_value = 0.35
+                else:
+                    pawn_value = 0.3
+            for row in range(0, 8):
+                if position[row][self.columns.index(move[0])] == 0.1 and row > current_before_row:
+                    current_before_row = row
+        else:
+            pawn_value = -0.1
+            if "=" in move:
+                promotion = move.split("=")[1]
+                if promotion == "Q":
+                    pawn_value = -0.9
+                elif promotion == "R":
+                    pawn_value = -0.5
+                elif promotion == "B":
+                    pawn_value = -0.35
+                else:
+                    pawn_value = -0.3
+            for row in range(0, 8):
+                if position[row][self.columns.index(move[0])] == -0.1 and row > current_before_row:
+                    current_before_row = row
 
-        if move[0] in columns and move[1].isnumeric():
-            if turn == white:
-                for row in range(0, 8):
-                    
-            co_ordinates_before =
+        co_ordinates_before = [self.columns.index(move[0]), current_before_row]
+        co_ordinates_after = [self.columns.index(move[0]), 8 - int(move[1])]
 
-        #elif move[0] in columns and move[1] == "x":
+        position[co_ordinates_before[1]][co_ordinates_before[0]] = 0
+        position[co_ordinates_after[1]][co_ordinates_after[0]] = pawn_value
 
-    def count_material(self):
-        pass
+        return position
+
+    # Updates position if move is a pawn taking a piece
+    def pawn_take(self, position, move, turn):
+        row = 0
+        current_before_row = 0
+        if turn == "w":
+            pawn_value = 0.1
+            if "=" in move:
+                promotion = move.split("=")[1]
+                if promotion == "Q":
+                    pawn_value = 0.9
+                elif promotion == "R":
+                    pawn_value = 0.5
+                elif promotion == "B":
+                    pawn_value = 0.35
+                else:
+                    pawn_value = 0.3
+            for row in range(0, 8):
+                if position[row][self.columns.index(move[0])] == 0.1 and row > current_before_row:
+                    current_before_row = row
+
+        else:
+            pawn_value = -0.1
+            if "=" in move:
+                promotion = move.split("=")[1]
+                if promotion == "Q":
+                    pawn_value = -0.9
+                elif promotion == "R":
+                    pawn_value = -0.5
+                elif promotion == "B":
+                    pawn_value = -0.35
+                else:
+                    pawn_value = -0.3
+            for row in range(0, 8):
+                if position[row][self.columns.index(move[0])] == -0.1 and row > current_before_row:
+                    current_before_row = row
+
+        co_ordinates_before = [self.columns.index(move[0]), current_before_row]
+        co_ordinates_after = [self.columns.index(move[2]), 8 - int(move[3])]
+
+        position[co_ordinates_before[1]][co_ordinates_before[0]] = 0
+        position[co_ordinates_after[1]][co_ordinates_after[0]] = pawn_value
+
+        return position
+
+    # Updates position if move is just a normal piece
+    def piece_move(self, position, move, turn):
+        if turn == "w":
+            piece = move[0]
+            if piece == "K":
+                piece_value = 1
+            elif piece == "Q":
+                piece_value = 0.9
+            elif piece == "R":
+                piece_value = 0.5
+            elif piece == "B":
+                piece_value = 0.35
+            else:
+                piece_value = 0.3
+            co_ordinates_before = [self.columns.index(move[1]), 8 - int(move[2])]
+            if "x" not in move:
+                co_ordinates_after = [self.columns.index(move[3]), 8 - int(move[4])]
+            else:
+                co_ordinates_after = [self.columns.index(move[4]), 8 - int(move[5])]
+
+        else:
+            piece = move[0]
+            if piece == "K":
+                piece_value = -1
+            elif piece == "Q":
+                piece_value = -0.9
+            elif piece == "R":
+                piece_value = -0.5
+            elif piece == "B":
+                piece_value = -0.35
+            else:
+                piece_value = -0.3
+            co_ordinates_before = [self.columns.index(move[1]), 8 - int(move[2])]
+            if "x" not in move:
+                co_ordinates_after = [self.columns.index(move[3]), 8 - int(move[4])]
+            else:
+                co_ordinates_after = [self.columns.index(move[4]), 8 - int(move[5])]
+
+        position[co_ordinates_before[1]][co_ordinates_before[0]] = 0
+        position[co_ordinates_after[1]][co_ordinates_after[0]] = piece_value
+
+        return position
+
+    # Checks which type of move the move is and then calls the function accordingly
+    # Also updates position for castling
+    def make_move(self, position, move, turn):
+
+        if move[0] in self.columns and move[1].isnumeric():
+            return self.pawn_push(position, move, turn)
+
+        elif move[0] in self.columns and move[1] == "x":
+            return self.pawn_take(position, move, turn)
+
+        elif move[1] in self.columns and move[2].isnumeric():
+            return self.piece_move(position, move, turn)
+
+        elif move == "O-O":
+            if turn == "w":
+                position[7][0] = 0
+                position[7][3] = 0
+                position[7][2] = 0.5
+                position[7][1] = 1
+            else:
+                position[0][0] = 0
+                position[0][3] = 0
+                position[0][2] = 0.5
+                position[0][1] = 1
+            return position
+
+        elif move == "O-O-O":
+            if turn == "w":
+                position[7][7] = 0
+                position[7][3] = 0
+                position[7][4] = 0.5
+                position[7][5] = 1
+            else:
+                position[0][7] = 0
+                position[0][3] = 0
+                position[0][4] = 0.5
+                position[0][5] = 1
+            return position
+        else:
+            print(f'Move not recognised: {move}')
+            return 0
+
+    # Counts total count_material
+    # Positive material means white is winning
+    # Negative material means black is winning
+    def count_material(self, position):
+        material = 0
+        for rank in range(0, 8):
+            for file in range(0, 8):
+                material += position[rank][file]
+        return material
 
     def cluster(self):
         pass
@@ -79,16 +265,32 @@ class Engine():
         pass
 
 
+    def evaluate(self, legal_moves, fen):
+
+        position = self.fen_to_matrix(fen)
+        turn = fen.split(" ")[1]
+
+        if "O-O" in legal_moves:
+            move = "O-O"
+        else:
+            move = legal_moves[random.randint(0, len(legal_moves)-1)]
+
+        position = self.make_move(position, move, turn)
+
+        #print(move, *position, sep="\n")
+        print(round(self.count_material(position), 2))
+
+        data.Insert(fen, move)
+
+        return move
+
 # Function called from Main.py for chess
 def engine(legal_moves, fen):
+    return processor.evaluate(legal_moves, fen)
 
-    print(legal_moves)
-    position = processor.fen_to_matrix(fen)
-    turn = fen.split(" ")[1]
-
-    return legal_moves[0]
-
+# Initialises the Engine class
 processor = Engine()
+data = ChessDatabase()
 
 """
 import numpy as np
