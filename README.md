@@ -1,73 +1,31 @@
-# Abstract
+# Python CNN
 
-This is an ongoing project to create an easy to use Neural Network in python.
+This is a Neural Network built in python designed to recognise shapes in a 21x21 grid of black and white pixels.
 
-The goal is to be able to enter inputs and outputs then have the entire model calculated and trained with no fuss.
+## What is this code
 
-Currently, the code is able to recognise patterns in an input with a single output.
+This code contains a single layer Neural Network which takes a 21x21 image as a 441 element Vector to detect wether the shape is a triangle, circle or square. The training data is a very small data set and the accuracy of this network will be small as it is only a single layer with few examples.</br>
+The code will go through every file in "TestingData" that is a .png and will attempt to identify its shape.
 
-The code now works on 21x21 pixel images to recognise shapes.
+## Directory Structure
 
-To change the input dimensions you need to change the input = np.zeros((21 , 21)) to the image size.
-In the future this will be done automatically and you can just input a data set or image.
+```
+CNN
+|
+|-- ANN             # Has the Weights and biases of the neural network
+|   
+|-- TestingData     # Contains the unknown 21x21 black and white images
+|
+|-- TrainingData    # Contains all labeled data in the form of "shape"_"number".png
+|
+|-- CNN.py          # The Neural Network libary created with Numpy 
+|-- Main.py         # The main file to be run, currently set to train=False
+```
 
-Eventually the code will be able to recognise patters in any data sets e.g. Images or arrays.
+## Dependencies
 
-# Dependencies
-
-To run this library you will need to have installed:
-
-matplotlib       (pip install matplotlib)
-
-image_slicer     (pip install image-slicer)
-
-numpy            (pip install numpy)
-
-pillow           (pip install Pillow)
-
-# Maths
-
-The code currently generates its own model dimensions and does backwards propagation on small images.
-
-The formula for the model is standard forwards and backwards propagation:
-
-
-z = wx + b
-
-a = sigmoid(z)
-
-
-w is the weight
-
-x is the input
-
-b is the bias
-
-a is the layer output
-
-
-The way a Neural Network works, is it takes the input and passes it through forward propagation. Then,
-to train the model you use the chain rule to calculate the gradient of the weights and biases with respect 
-to the cost. The cost is simply the (output predicted - the wanted output) squared. The formula to calcule the gradient
-with a single layer is:
-
-
-dC/db = sigmoidPrime(a) * 2 * (y - yHat)
-
-dC/dw = x * sigmoidPrime(a) * 2 * (y - yHat)
-
-
-y is the output  of model
-
-yHat is the wanted output
-
-
-Then, this gradient is used to calculate the change to be applied to the network using the simple equation:
-
-
-w = w - (l * dC/dw)
-
-b = b - (l * dC/db)
-
-
-l is the learn rate usually 1 or less
+```
+pip install PIL
+pip install matplotlib
+pip install numpy
+```
